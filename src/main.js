@@ -280,7 +280,7 @@ function createBubbleWindow() {
   bubbleWindow = window;
   bubbleReady = false;
   secureWindow(window, page);
-  window.setAlwaysOnTop(true, 'normal');
+  window.setAlwaysOnTop(true, 'screen-saver');
   window.setIgnoreMouseEvents(true);
   window.webContents.once('did-finish-load', () => {
     bubbleReady = true;

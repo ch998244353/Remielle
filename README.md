@@ -12,8 +12,8 @@
 
 | 文件 | 适合谁 | 行为 |
 | --- | --- | --- |
-| `蕾米埃尔-Setup-0.4.0-beta.1.exe` | 希望一键安装的用户 | 安装到当前用户，创建桌面和开始菜单快捷方式，安装后启动，可从 Windows 设置卸载 |
-| `蕾米埃尔-Portable-0.4.0-beta.1.exe` | 希望免安装或放在 U 盘的用户 | 单文件直接运行，不创建卸载入口 |
+| `Remielle-Setup-0.4.0-beta.1.exe`（蕾米埃尔一键安装器） | 希望一键安装的用户 | 安装到当前用户，创建桌面和开始菜单快捷方式，安装后启动，可从 Windows 设置卸载 |
+| `Remielle-Portable-0.4.0-beta.1.exe`（蕾米埃尔便携版） | 希望免安装或放在 U 盘的用户 | 单文件直接运行，不创建卸载入口 |
 | `SHA256SUMS.txt` | 所有用户 | 用于核对下载文件是否完整 |
 
 本项目暂未购买 Windows 代码签名证书。Windows SmartScreen 可能显示“未知发布者”；请只从本仓库 Release 下载，并先核对 SHA-256，不要从不明镜像运行。
@@ -63,8 +63,8 @@ Bridge v1 只允许固定事件和白名单字段进入本地 Named Pipe：
 在下载目录打开 PowerShell：
 
 ```powershell
-Get-FileHash -Algorithm SHA256 -LiteralPath '.\蕾米埃尔-Setup-0.4.0-beta.1.exe'
-Get-FileHash -Algorithm SHA256 -LiteralPath '.\蕾米埃尔-Portable-0.4.0-beta.1.exe'
+Get-FileHash -Algorithm SHA256 -LiteralPath '.\Remielle-Setup-0.4.0-beta.1.exe'
+Get-FileHash -Algorithm SHA256 -LiteralPath '.\Remielle-Portable-0.4.0-beta.1.exe'
 ```
 
 结果应与同一 Release 中的 `SHA256SUMS.txt` 完全一致。
@@ -80,7 +80,7 @@ npm start
 npm run build
 ```
 
-`npm run build` 同时生成 NSIS 安装器和 Portable 单文件版。运行素材位于 `assets/processed/`，原始动作素材保留在 `动作视频/`，因此可以复现构建；不要重新编码或删除原始素材。
+`npm run build` 同时生成中文文件名的 NSIS 安装器和 Portable 单文件版。GitHub 会清理 Release 资产名中的非 ASCII 前缀，因此工作流上传等内容的 `Remielle-*` 副本，并保留中文显示标签；二进制内容不变。运行素材位于 `assets/processed/`，原始动作素材保留在 `动作视频/`，因此可以复现构建；不要重新编码或删除原始素材。
 
 ## 常见问题
 

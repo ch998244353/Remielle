@@ -68,3 +68,11 @@ test('托盘仅保留安全入口，桌宠右键承载外观和位置操作', as
   assert.doesNotMatch(pet, /显示\/隐藏|Codex 通知|退出/u);
   assert.match(main, /BUBBLE_VISIBLE_MS = 6000/u);
 });
+
+test('消息气泡使用高于普通置顶窗口的最上层级且保持鼠标穿透', async () => {
+  const main = await fs.readFile(path.join(__dirname, '..', 'src', 'main.js'), 'utf8');
+  const bubbleWindow = main.match(/function createBubbleWindow\(\) \{[\s\S]*?^\}/mu)?.[0] || '';
+
+  assert.match(bubbleWindow, /setAlwaysOnTop\(true, 'screen-saver'\)/u);
+  assert.match(bubbleWindow, /setIgnoreMouseEvents\(true\)/u);
+});

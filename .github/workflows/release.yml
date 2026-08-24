@@ -34,9 +34,11 @@ jobs:
         shell: pwsh
         run: |
           $version = (Get-Content -LiteralPath package.json -Raw | ConvertFrom-Json).version
+          Copy-Item -LiteralPath "dist/蕾米埃尔-Setup-$version.exe" -Destination "dist/Remielle-Setup-$version.exe"
+          Copy-Item -LiteralPath "dist/蕾米埃尔-Portable-$version.exe" -Destination "dist/Remielle-Portable-$version.exe"
           $files = @(
-            "dist/蕾米埃尔-Setup-$version.exe",
-            "dist/蕾米埃尔-Portable-$version.exe"
+            "dist/Remielle-Setup-$version.exe",
+            "dist/Remielle-Portable-$version.exe"
           )
           $lines = foreach ($file in $files) {
             $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $file).Hash.ToLowerInvariant()
@@ -52,14 +54,14 @@ jobs:
           $tag = '${{ github.ref_name }}'
           $version = (Get-Content -LiteralPath package.json -Raw | ConvertFrom-Json).version
           $assets = @(
-            "dist/蕾米埃尔-Setup-$version.exe",
-            "dist/蕾米埃尔-Portable-$version.exe",
+            "dist/Remielle-Setup-$version.exe#蕾米埃尔一键安装器",
+            "dist/Remielle-Portable-$version.exe#蕾米埃尔便携版",
             'dist/SHA256SUMS.txt'
           )
           if (gh release view $tag 2>$null) {
-            gh release upload $tag @assets --clobber
-            exit $LASTEXITCODE
+            gh release delete $tag --yes
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
-          $options = @('--title', "蕾米埃尔 $version", '--generate-notes')
+          $options = @('--title', "蕾米埃尔 $version", '--generate-notes', '--verify-tag')
           if ($tag.Contains('-')) { $options += '--prerelease' }
           gh release create $tag @assets @options

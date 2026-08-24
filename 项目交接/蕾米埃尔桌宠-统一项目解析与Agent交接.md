@@ -10,7 +10,7 @@
 | 技术栈 | Electron 43、原生 JavaScript、HTML/CSS、Node.js 内置模块 |
 | 运行入口 | `package.json` → `src/main.js` |
 | 当前构建物 | `dist/蕾米埃尔-Setup-0.4.0-beta.1.exe`、`dist/蕾米埃尔-Portable-0.4.0-beta.1.exe` |
-| 自动测试 | 41/41 PASS（2026-08-24 重新验证） |
+| 自动测试 | 42/42 PASS（2026-08-24 重新验证） |
 | 文档定位 | 唯一架构、接口、验证和交接事实源 |
 
 下一位 Agent 不需要寻找旧设计书、旧验收截图或先前对话；先读本文，再用 CodeGraph 定位任务涉及的符号，最后只读取被点名的源码和测试。
@@ -45,7 +45,7 @@
 | 交付项 | 状态 | 事实 |
 | --- | --- | --- |
 | 技术实现 | 完成 | Electron 原生 JavaScript；无前端框架、网络服务或新增运行时依赖 |
-| 窗口 | 完成 | 人物与气泡均为无边框透明窗口，`skipTaskbar: true` |
+| 窗口 | 完成 | 人物与气泡均为无边框透明窗口，`skipTaskbar: true`；气泡使用 `screen-saver` 置顶层级并保持鼠标穿透 |
 | 菜单 | 完成 | 托盘保留安全入口；人物右键承载外观、缩放、模拟消息与回屏 |
 | 拖动动作锁 | 完成 | 物理拖动始终可用；只有待机起始手势进入拿起、保持、放下 |
 | 非待机互斥 | 完成 | 锁定期间消息只更新 6 秒气泡，不覆盖、重启或补播人物动作 |
@@ -57,7 +57,7 @@
 | Codex 通知链路 | 已实现 | Hook 安装/卸载、备份、转发、Pipe、清洗、双槽调度和渲染均已实现 |
 | 安全通知摘要 | 已实现 | Bridge v1 可选 `detailText`；任务开头、安全命令、basename、审批和结束摘要均由 PowerShell 在 Pipe 前生成 |
 | 首次运行向导 | 已实现 | 无有效 `position.json` 时原生选择启用或跳过；结束即保存位置；启用后要求完全重启并在 `/hooks` 审核信任 |
-| 自动测试 | 通过 | `npm test`：41/41 PASS |
+| 自动测试 | 通过 | `npm test`：42/42 PASS |
 | 本地构建 | 通过 | NSIS 与 Portable 均已生成，ASAR 内容边界已复核；GitHub Release 下载复核尚未完成 |
 | 桌面快捷方式 | 待切换 | 新 Release 下载复核后切换到 0.4.0 Beta，再将旧 0.3.0 移入回收站 |
 | 开发态实机 | 通过 | 2026-08-24 已验证拖动锁、消息、点击、取消、位置保存、额度、菜单、缩放和计时 |
@@ -256,6 +256,7 @@ pointerdown / move / up / cancel
 - 人物缩放以人物脚底中心为锚点，然后校正到屏幕内；气泡缩放同步改变窗口、白色气泡、尾巴和文字，并重新计算左右落点与屏幕边界。
 - 镜像作用于全部人物视频和拖动保持图片，不镜像气泡。
 - 自动换边、五档缩放、工作区限制和尾巴方向仍按最终落点计算；气泡窗口保持鼠标穿透，透明重叠区域不阻挡拖动。
+- 气泡在 Windows 上使用 Electron `screen-saver` always-on-top 层级，高于普通网页和普通置顶窗口；它不可聚焦，不抢走当前输入焦点。
 - 消息先合并空白，再限制为最多 50 个 Unicode code points；超长文本以省略号结束。
 - 每次显示消息、额度或失败提示都会重置一个 6000ms 计时器；到期、手动隐藏和退出都会清理计时器并隐藏窗口。
 
@@ -524,6 +525,8 @@ PowerShell 只保留规范化的任务开头、安全命令程序/子命令、�
 
 项目目录不再保留 0.1.0、0.2.0 发布包。0.3.0 只在 0.4.0 Beta 发布复核期间临时保留；切换成功后不再作为项目当前发布物。不要从回收站内容推断项目现状。
 
+electron-builder 本地仍生成计划中的中文文件名。GitHub 会移除 Release 资产名的非 ASCII 前缀，因此自动发布先复制为 `Remielle-Setup-<version>.exe` 和 `Remielle-Portable-<version>.exe`，并为两个资产设置中文显示标签；二进制内容与中文本地构建物相同，`SHA256SUMS.txt` 使用实际可下载文件名。
+
 ## 14. 修改入口、开发、测试和发布步骤
 
 ### 修改入口速查表
@@ -588,8 +591,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\process-assets.ps1
 
 | 文件 | SHA-256 |
 | --- | --- |
-| `dist/蕾米埃尔-Setup-0.4.0-beta.1.exe`（本地构建） | `8FF236AD8A1BA1C82232C73F93063CC55519F3D8886226AE42AAA17CC85FC54C` |
-| `dist/蕾米埃尔-Portable-0.4.0-beta.1.exe`（本地构建） | `39DAC725D0051790F40091FD6E4C0052BF434255C159FCC38D93E7035A9DB07B` |
+| `dist/蕾米埃尔-Setup-0.4.0-beta.1.exe`（本地构建） | `335492D2BD45926195C3EF82453FD357AABB6B8487AE874BFE2B48DCEABEB5DD` |
+| `dist/蕾米埃尔-Portable-0.4.0-beta.1.exe`（本地构建） | `6440013348C39B7660B76388AD911965B06DD99650AAF02B4DC0AF3AD4E05FF1` |
 | `dist/蕾米埃尔-Portable-0.3.0.exe`（发布切换前临时保留） | `D2EA488C113A79C39EFA9EE77FC9AFFD040F8D7B61B17CA7380C310EBCF346E2` |
 
 GitHub Actions 构建不保证与本机 Electron-builder 输出逐字节一致；Release 的公开权威哈希以同一 Release 附带并经回下载复核的 `SHA256SUMS.txt` 为准。任何素材或发布任务都应先复算相关哈希。不要把完整用户提示词、工具输入输出、认证数据、真实 hooks.json、Hook 备份、测试 userData 或本机日志打进 ASAR/EXE。
