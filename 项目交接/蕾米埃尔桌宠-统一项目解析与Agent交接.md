@@ -9,7 +9,8 @@
 | 许可证 | MIT；代码与全部角色素材统一适用 |
 | 技术栈 | Electron 43、原生 JavaScript、HTML/CSS、Node.js 内置模块 |
 | 运行入口 | `package.json` → `src/main.js` |
-| 当前构建物 | `dist/蕾米埃尔-Setup-0.4.0-beta.1.exe`、`dist/蕾米埃尔-Portable-0.4.0-beta.1.exe` |
+| 当前本地构建物 | `dist/蕾米埃尔-Setup-0.4.0-beta.1.exe`、`dist/蕾米埃尔-Portable-0.4.0-beta.1.exe` |
+| 当前公开发布 | `https://github.com/ch998244353/Remielle/releases/tag/v0.4.0-beta.1`，Pre-release |
 | 自动测试 | 42/42 PASS（2026-08-24 重新验证） |
 | 文档定位 | 唯一架构、接口、验证和交接事实源 |
 
@@ -58,8 +59,9 @@
 | 安全通知摘要 | 已实现 | Bridge v1 可选 `detailText`；任务开头、安全命令、basename、审批和结束摘要均由 PowerShell 在 Pipe 前生成 |
 | 首次运行向导 | 已实现 | 无有效 `position.json` 时原生选择启用或跳过；结束即保存位置；启用后要求完全重启并在 `/hooks` 审核信任 |
 | 自动测试 | 通过 | `npm test`：42/42 PASS |
-| 本地构建 | 通过 | NSIS 与 Portable 均已生成，ASAR 内容边界已复核；GitHub Release 下载复核尚未完成 |
-| 桌面快捷方式 | 待切换 | 新 Release 下载复核后切换到 0.4.0 Beta，再将旧 0.3.0 移入回收站 |
+| 本地构建 | 通过 | NSIS 与 Portable 均已生成；ASAR 内容、安装/卸载入口、桌面/开始菜单快捷方式和 Portable 启动已复核 |
+| GitHub 发布 | 通过 | Actions run `32706419364` 成功；Pre-release 三个资产完整；回下载两个 EXE 与 `SHA256SUMS.txt` 一致 |
+| 桌面快捷方式 | 有效 | `%USERPROFILE%\Desktop\蕾米埃尔.lnk` 指向当前用户安装的 0.4.0 Beta；旧 0.3.0 快捷方式已进回收站 |
 | 开发态实机 | 通过 | 2026-08-24 已验证拖动锁、消息、点击、取消、位置保存、额度、菜单、缩放和计时 |
 
 | 正式验收事实 | 状态 |
@@ -437,6 +439,7 @@ PowerShell 只保留规范化的任务开头、安全命令程序/子命令、�
 | `%APPDATA%\蕾米埃尔\codex-hook-forwarder.ps1` | 自动生成的隐藏转发器 |
 | `%APPDATA%\蕾米埃尔\position.json` | 桌宠位置和视觉偏好，也是首次运行判断依据 |
 | `%USERPROFILE%\Desktop\蕾米埃尔.lnk` | NSIS 安装版或当前正式验证版本的启动快捷方式 |
+| `%LOCALAPPDATA%\Programs\remiel-desktop-pet\` | 当前用户 NSIS 安装目录，包含应用与卸载程序 |
 
 任何 Agent 修改 `hooks.json` 时必须保留其他 handler；文件非法时不得覆盖。不要把这些机器文件复制进项目或发布包。
 
@@ -519,11 +522,10 @@ PowerShell 只保留规范化的任务开头、安全命令程序/子命令、�
 | `.codegraph/` | 生成的结构索引；用于导航，不手工编辑，不视为产品源码 |
 | `dist/蕾米埃尔-Setup-0.4.0-beta.1.exe` | 当前本地 NSIS 单击安装器；当前用户安装、桌面/开始菜单快捷方式、卸载入口、安装后启动 |
 | `dist/蕾米埃尔-Portable-0.4.0-beta.1.exe` | 当前本地免安装单文件版 |
-| `dist/蕾米埃尔-Portable-0.3.0.exe` | 发布切换前的临时回滚基线；GitHub Release 下载复核后移入回收站 |
-| `artifacts/` | 可再生成的临时素材验证输出；不是事实源，不提交 Git |
-| `dist/win-unpacked/`、`dist/builder-debug.yml`、`dist/*.blockmap`、`dist/latest.yml` | electron-builder 可再生成中间物；ASAR 验证完成后清理，不提交 Git |
+| `artifacts/` | 可再生成的临时素材验证输出；当前已清理，不是事实源，不提交 Git |
+| `dist/win-unpacked/`、`dist/builder-debug.yml`、`dist/*.blockmap`、`dist/latest.yml` | electron-builder 可再生成中间物；当前已清理，不提交 Git |
 
-项目目录不再保留 0.1.0、0.2.0 发布包。0.3.0 只在 0.4.0 Beta 发布复核期间临时保留；切换成功后不再作为项目当前发布物。不要从回收站内容推断项目现状。
+项目目录不再保留 0.1.0、0.2.0、0.3.0 发布包；旧 0.3.0 EXE 和旧快捷方式在新 Release 回下载复核后已移入 Windows 回收站，可在回收站清空前恢复。不要从回收站内容推断项目现状。
 
 electron-builder 本地仍生成计划中的中文文件名。GitHub 会移除 Release 资产名的非 ASCII 前缀，因此自动发布先复制为 `Remielle-Setup-<version>.exe` 和 `Remielle-Portable-<version>.exe`，并为两个资产设置中文显示标签；二进制内容与中文本地构建物相同，`SHA256SUMS.txt` 使用实际可下载文件名。
 
@@ -593,7 +595,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\process-assets.ps1
 | --- | --- |
 | `dist/蕾米埃尔-Setup-0.4.0-beta.1.exe`（本地构建） | `335492D2BD45926195C3EF82453FD357AABB6B8487AE874BFE2B48DCEABEB5DD` |
 | `dist/蕾米埃尔-Portable-0.4.0-beta.1.exe`（本地构建） | `6440013348C39B7660B76388AD911965B06DD99650AAF02B4DC0AF3AD4E05FF1` |
-| `dist/蕾米埃尔-Portable-0.3.0.exe`（发布切换前临时保留） | `D2EA488C113A79C39EFA9EE77FC9AFFD040F8D7B61B17CA7380C310EBCF346E2` |
+| `Remielle-Setup-0.4.0-beta.1.exe`（GitHub Release） | `CCE31469EB15EEE6A64D4C4EF28268CADE9ACF85D4427BE0F1EEB1FD2DB15BD7` |
+| `Remielle-Portable-0.4.0-beta.1.exe`（GitHub Release） | `B3F29C648AD7A2AF8625C48A6949EDAF055098BC3725929DCF84EFBACCD8FF82` |
 
 GitHub Actions 构建不保证与本机 Electron-builder 输出逐字节一致；Release 的公开权威哈希以同一 Release 附带并经回下载复核的 `SHA256SUMS.txt` 为准。任何素材或发布任务都应先复算相关哈希。不要把完整用户提示词、工具输入输出、认证数据、真实 hooks.json、Hook 备份、测试 userData 或本机日志打进 ASAR/EXE。
 
