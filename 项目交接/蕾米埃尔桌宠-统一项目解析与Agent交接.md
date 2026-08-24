@@ -10,7 +10,7 @@
 | 技术栈 | Electron 43、原生 JavaScript、HTML/CSS、Node.js 内置模块 |
 | 运行入口 | `package.json` → `src/main.js` |
 | 当前本地构建物 | `dist/蕾米埃尔-Setup-0.4.0-beta.4.exe`、`dist/蕾米埃尔-Portable-0.4.0-beta.4.exe` |
-| 当前公开发布 | `https://github.com/ch998244353/Remielle/releases/tag/v0.4.0-beta.3`，Pre-release |
+| 当前公开发布 | `https://github.com/ch998244353/Remielle/releases/tag/v0.4.0-beta.4`，Pre-release |
 | 自动测试 | 51/51 PASS（2026-08-25 项目通知气泡改造后重新验证） |
 | 文档定位 | 唯一架构、接口、验证和交接事实源 |
 
@@ -22,8 +22,8 @@
 | --- | --- | --- |
 | 代码基线 | `main` 已包含 DeepSeek Harness 双接入、16:9 项目通知气泡和 Windows 安装版 Codex 余额路径修复；`npm test` 为 51/51 PASS | 先运行 `git status --short --branch`；继续修改前跑对应聚焦测试，不要覆盖当前改动 |
 | 结构索引 | CodeGraph 健康，当前索引覆盖第一方 JavaScript 与发布工作流 | 结构、调用关系和影响范围先问 CodeGraph，不递归扫描依赖或素材 |
-| 当前发布 | GitHub Pre-release 为 `v0.4.0-beta.3`；Actions run `32757199663` 成功，Setup、Portable 与 `SHA256SUMS.txt` 完整 | 发布任务才读取第 13–15 节并重新复算哈希 |
-| 本机安装 | 已从 GitHub Release 下载并验证 beta.3 Setup SHA-256 `BF9EBECE880C7547D9BF4DE6126D1767771581AAF6B5058B48FE3B50BDEC1FC5`，注册表版本与用户实机余额显示均通过 | 不要再重装；下一步只完成 Codex lifecycle 桌面端复验 |
+| 当前发布 | GitHub Pre-release 为 `v0.4.0-beta.4`；Actions run `32761613825` 成功，Setup、Portable 与 `SHA256SUMS.txt` 完整 | 下一次有效更新继续按本节强制发布流程递增版本 |
+| 本机安装 | 已从 GitHub Release 下载并验证 beta.4 Setup SHA-256 `FEB8D3CCE62A2F8B6C3C6A2576C84ECB64D216A420FD2AB1991E0D1F59D200D0`，重新安装并启动；注册表、进程和桌面快捷方式均指向 beta.4 | 不要重复安装；下一次更新完成后再关闭并升级 |
 | Hook 当前阻塞 | 用户已完成四条蕾米埃尔 Hook 信任并完全重启 Codex Desktop；尚未记录真实新本地任务的开始、工具和结束气泡 | 用真实新本地任务验收 lifecycle；不要用余额成功替代 Hook 通知验收 |
 | DeepSeek 当前状态 | 默认 `DSH_HOME` 的 `web` profile 已安装 `remiel-dsh-bridge`；用户完全重启 Harness 后确认真实 Web UI 任务正常显示，真实 Key 余额查询也已通过 | 后续只需在 Bundle 或 Harness 版本变化时重新验收 |
 | 生命周期验收 | Hook → PowerShell → Pipe → 气泡链路可用；尚不能据此宣称“干净重装后的桌面端正式接入完成” | 只有 4/4 信任、完整重启和真实桌面任务消息三项同时成立，才把 `PARTIAL` 改为完成 |
@@ -86,9 +86,9 @@
 | 首次运行向导 | 已实现 | 无有效 `position.json` 时原生选择启用或跳过；结束即保存位置；启用后要求完全重启并在 `/hooks` 审核信任 |
 | 自动测试 | 通过 | `npm test`：51/51 PASS（含真实 PowerShell、DeepSeek Bundle、通知协议和 16:9 气泡契约） |
 | 本地构建 | 通过 | beta.4 NSIS 与 Portable 均已生成；ASAR 仅 37 项允许内容，安装升级、注册表版本和本地重启已复核 |
-| GitHub 发布 | 通过 | `v0.4.0-beta.3` Actions run `32757199663` 成功；Pre-release 三个资产完整；Setup 的 GitHub/SHA256SUMS/本地回下载三方 SHA-256 一致 |
+| GitHub 发布 | 通过 | `v0.4.0-beta.4` Actions run `32761613825` 成功；Pre-release 三个资产完整；GitHub digest、`SHA256SUMS.txt` 和回下载复算一致 |
 | GitHub 纯净重装 | 通过 | 2026-08-24 已卸载旧安装、重置蕾米埃尔 userData、清除自身 Hook/旧信任，再从公开 Release 下载固定哈希 Setup 并完成首次运行 |
-| beta.4 本机升级 | 通过 | 2026-08-25 已关闭且仅关闭蕾米埃尔，安装本地 beta.4 Setup 并重新启动；注册表与运行进程均确认新版本 |
+| beta.4 本机升级 | 通过 | 2026-08-25 已两次只关闭蕾米埃尔：先验证本地构建，再用回下载的公开 Setup 覆盖安装并重新启动；注册表、运行进程和桌面快捷方式均确认新版本 |
 | Hook 重新信任 | 通过（用户确认） | 用户已在 CLI `/hooks` 完成四条蕾米埃尔 Hook 审核信任，并完全重启 Codex Desktop |
 | 桌面快捷方式 | 有效 | `%USERPROFILE%\Desktop\蕾米埃尔.lnk` 指向当前用户安装的 0.4.0 Beta；旧 0.3.0 快捷方式已进回收站 |
 | 开发态实机 | 通过 | 2026-08-24 已验证拖动锁、消息、点击、取消、位置保存、额度、菜单、缩放和计时 |
@@ -524,7 +524,7 @@ PowerShell 只保留工作目录末级名、规范化任务开头、常见工具
 
 | 文件 | 职责 |
 | --- | --- |
-| `AGENTS.md` | 下一位 Agent 的最短入口和不可破坏边界 |
+| `AGENTS.md` | 下一位 Agent 的最短入口、不可破坏边界，以及每次有效更新后关闭/重启蕾米埃尔、推送 GitHub 和发布最新版的硬门槛 |
 | `README.md` | 面向下载用户的中文入口：下载、首次运行、隐私、菜单、SmartScreen、开发和排障 |
 | `LICENSE` | MIT 许可证；覆盖仓库代码与角色素材 |
 | `.gitattributes` | 文本换行与图片、视频、图标、EXE 二进制属性 |
@@ -636,13 +636,13 @@ electron-builder 本地仍生成计划中的中文文件名。GitHub 会移除 R
 4. 只读取任务涉及的源码和对应测试。
 5. 行为变更先补一个能失败的高价值测试，再做最小根因修改。
 6. 运行聚焦测试，再运行完整 `npm test`。
-7. 非发布任务到此停止；不要为了“完整”生成新规划、截图或安装包。
-8. 发布任务才更新 `package.json` 与锁文件版本，然后运行 `npm run build`。
-9. 构建前若当前 Portable 正在运行，Windows 会锁住目标 EXE；只退出蕾米埃尔桌宠，不要在 Agent 回复途中强制退出 Codex 桌面应用。
-10. 构建后检查 ASAR 只包含 `src/**/*`、`assets/processed/**/*` 和 `package.json`，验证 NSIS 快捷方式/卸载入口和 Portable 启动并记录两个 EXE 哈希。
-11. 标签工作流执行 `npm ci → npm test → npm run build`，使用 runner 自带 `gh` 和 `GH_TOKEN` 发布两个 EXE 与 `SHA256SUMS.txt`；带 `-` 的标签标记 Pre-release。
-12. 从 GitHub Release 重新下载三个文件并复算哈希后，才更新本机快捷方式并移除旧版。
-13. 发生架构、接口、路径、验收状态或发布物变化时，更新本文；不要新增平行文档。
+7. 每次有效项目更新都按发布任务收尾：递增 `package.json` 与锁文件版本，不保留“只改本地、稍后再发”的中间状态。
+8. 构建前只关闭路径明确的蕾米埃尔进程，不得关闭 Codex；然后运行 `npm run build`。
+9. 构建后检查 ASAR 只包含 `src/**/*`、`assets/processed/**/*` 和 `package.json`，验证 NSIS/Portable、记录本地哈希，安装并重新启动本地最新版。
+10. 提交并推送 `main`，创建对应 annotated tag 并推送；标签工作流执行 `npm ci → npm test → npm run build`，使用 runner 自带 `gh` 和 `GH_TOKEN` 发布两个 EXE 与 `SHA256SUMS.txt`，带 `-` 的标签标记 Pre-release。
+11. 等待 Actions 和 Release 完成，从 GitHub Release 重新下载三个文件，以 `SHA256SUMS.txt` 和 GitHub digest 复算哈希。
+12. 再次只关闭蕾米埃尔，用公开 Setup 覆盖安装并重新启动，核对注册表、进程和桌面快捷方式。
+13. 把测试、构建、Action、哈希、安装和发布事实更新到本文并推送最终交接提交；不要新增平行文档。
 
 常用命令：
 
@@ -674,8 +674,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\process-assets.ps1
 | --- | --- |
 | `dist/蕾米埃尔-Setup-0.4.0-beta.4.exe`（本地构建） | `67760610A039542E689BA0DB0CC6F2572CD679C402793D2B32532B19B269654E` |
 | `dist/蕾米埃尔-Portable-0.4.0-beta.4.exe`（本地构建） | `F7ED9ECAD0056998E7D8A728AE7D1C092CE8E58C80E18E3CC720FC80EAB25CA4` |
-| `Remielle-Setup-0.4.0-beta.3.exe`（GitHub Release） | `BF9EBECE880C7547D9BF4DE6126D1767771581AAF6B5058B48FE3B50BDEC1FC5` |
-| `Remielle-Portable-0.4.0-beta.3.exe`（GitHub Release） | `0534A7EDF984E6C932E257895C76E38A70658A7EF255F569D9F3113C51132FB0` |
+| `Remielle-Setup-0.4.0-beta.4.exe`（GitHub Release） | `FEB8D3CCE62A2F8B6C3C6A2576C84ECB64D216A420FD2AB1991E0D1F59D200D0` |
+| `Remielle-Portable-0.4.0-beta.4.exe`（GitHub Release） | `30A2ECE383AFCEA5FF1F0F0E3217DD1A2E59D355D504980E5216F118D7479C82` |
 
 GitHub Actions 构建不保证与本机 Electron-builder 输出逐字节一致；Release 的公开权威哈希以同一 Release 附带并经回下载复核的 `SHA256SUMS.txt` 为准。任何素材或发布任务都应先复算相关哈希。不要把完整用户提示词、工具输入输出、认证数据、真实 hooks.json、Hook 备份、测试 userData 或本机日志打进 ASAR/EXE。
 
@@ -697,4 +697,4 @@ GitHub Actions 构建不保证与本机 Electron-builder 输出逐字节一致�
   + GitHub Actions 双目标预发布
 ```
 
-Codex 额度已在与 Explorer 等价、不含 Codex 资源目录的 PATH 中通过真实 Appx 绝对路径启动 `codex.exe app-server`，并由用户确认安装版气泡可正常显示剩余额度；此前失败根因是 beta.2 依赖了只有 Codex 子进程环境才具备的 PATH。Codex lifecycle 通知仍需以真实新本地任务的开始、工具和结束气泡单独验收，不把额度成功扩大为 Hook 通知成功。DeepSeek 默认 `web` profile 已安装 Bundle，并通过真实 `0.1.1-rc.2` 临时 Harness、余额 Pipe、真实凭据解析和官方余额接口成功路径验证。beta.4 已完成本地双目标构建、ASAR 白名单检查、安装升级和进程重启；公开发布信息以本节后续记录的 GitHub Release 和回下载哈希为准。保留现有隐私边界，不用 transcript 轮询，也不用任何接入创建 Thread/Turn 来冒充当前任务。
+Codex 额度已在与 Explorer 等价、不含 Codex 资源目录的 PATH 中通过真实 Appx 绝对路径启动 `codex.exe app-server`，并由用户确认安装版气泡可正常显示剩余额度；此前失败根因是 beta.2 依赖了只有 Codex 子进程环境才具备的 PATH。Codex lifecycle 通知仍需以真实新本地任务的开始、工具和结束气泡单独验收，不把额度成功扩大为 Hook 通知成功。DeepSeek 默认 `web` profile 已安装 Bundle，并通过真实 `0.1.1-rc.2` 临时 Harness、余额 Pipe、真实凭据解析和官方余额接口成功路径验证。`v0.4.0-beta.4` 已从提交 `9d4ae3d` 创建 annotated tag 并公开为 Pre-release，Actions run `32761613825` 成功；三个资产完整，GitHub digest、`SHA256SUMS.txt` 和回下载复算一致，本机已用公开 Setup 覆盖安装并重新启动。保留现有隐私边界，不用 transcript 轮询，也不用任何接入创建 Thread/Turn 来冒充当前任务。
