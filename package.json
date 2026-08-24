@@ -18,7 +18,7 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test",
-    "build": "electron-builder --win"
+    "build": "electron-builder --win --publish never"
   },
   "build": {
     "appId": "io.github.ch998244353.remielle",
