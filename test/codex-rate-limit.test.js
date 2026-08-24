@@ -2,7 +2,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { EventEmitter } = require('node:events');
 const { PassThrough } = require('node:stream');
-const { queryCodexRateLimit } = require('../src/codex-rate-limit.js');
+const path = require('node:path');
+const { queryCodexRateLimit, resolveCodexCommand } = require('../src/codex-rate-limit.js');
 
 function createChild(onRequest = () => {}) {
   const child = new EventEmitter();
@@ -49,6 +50,7 @@ test('通过 App Server 标准握手读取主额度并格式化剩余百分比',
   const spawnCalls = [];
 
   const text = await queryCodexRateLimit({
+    command: 'codex.exe',
     spawnProcess(command, args, options) {
       spawnCalls.push({ command, args, options });
       return child;
@@ -84,7 +86,7 @@ test('拒绝缺失或非数值的额度响应并结束子进程', async () => {
   });
 
   await assert.rejects(
-    queryCodexRateLimit({ spawnProcess: () => child }),
+    queryCodexRateLimit({ command: 'codex.exe', spawnProcess: () => child }),
     /invalid rate limit response/u
   );
   assert.equal(child.killed, true);
@@ -93,7 +95,7 @@ test('拒绝缺失或非数值的额度响应并结束子进程', async () => {
 test('额度请求超时或被取消时结束子进程', async () => {
   const timedOutChild = createChild();
   await assert.rejects(
-    queryCodexRateLimit({ spawnProcess: () => timedOutChild, timeoutMs: 5 }),
+    queryCodexRateLimit({ command: 'codex.exe', spawnProcess: () => timedOutChild, timeoutMs: 5 }),
     /timed out/u
   );
   assert.equal(timedOutChild.killed, true);
@@ -101,10 +103,27 @@ test('额度请求超时或被取消时结束子进程', async () => {
   const cancelledChild = createChild();
   const controller = new AbortController();
   const pending = queryCodexRateLimit({
+    command: 'codex.exe',
     spawnProcess: () => cancelledChild,
     signal: controller.signal
   });
   controller.abort();
   await assert.rejects(pending, /aborted/u);
   assert.equal(cancelledChild.killed, true);
+});
+
+test('Windows 安装版从 Appx 安装位置解析 Codex 可执行文件', () => {
+  const installLocation = 'C:\\Program Files\\WindowsApps\\OpenAI.Codex_test';
+  const executable = path.join(installLocation, 'app', 'resources', 'codex.exe');
+
+  assert.equal(resolveCodexCommand({
+    platform: 'win32',
+    findAppxInstallLocation: () => installLocation,
+    existsSync: (candidate) => candidate === executable
+  }), executable);
+  assert.equal(resolveCodexCommand({
+    platform: 'win32',
+    findAppxInstallLocation: () => '',
+    existsSync: () => false
+  }), 'codex.exe');
 });

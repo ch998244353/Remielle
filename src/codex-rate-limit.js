@@ -1,5 +1,37 @@
+const fs = require('node:fs');
+const path = require('node:path');
 const readline = require('node:readline');
-const { spawn } = require('node:child_process');
+const { spawn, spawnSync } = require('node:child_process');
+const { version } = require('../package.json');
+
+function findCodexAppxInstallLocation() {
+  const result = spawnSync('powershell.exe', [
+    '-NoLogo',
+    '-NoProfile',
+    '-NonInteractive',
+    '-Command',
+    'Get-AppxPackage -Name OpenAI.Codex | Sort-Object Version -Descending | Select-Object -First 1 -ExpandProperty InstallLocation'
+  ], {
+    encoding: 'utf8',
+    timeout: 5000,
+    windowsHide: true
+  });
+  return result.status === 0 ? result.stdout.trim() : '';
+}
+
+function resolveCodexCommand({
+  platform = process.platform,
+  existsSync = fs.existsSync,
+  findAppxInstallLocation = findCodexAppxInstallLocation
+} = {}) {
+  if (platform !== 'win32') return 'codex';
+  const installLocation = findAppxInstallLocation();
+  if (installLocation) {
+    const executable = path.join(installLocation, 'app', 'resources', 'codex.exe');
+    if (existsSync(executable)) return executable;
+  }
+  return 'codex.exe';
+}
 
 function formatRateLimit(result, timeZone) {
   const primary = result?.rateLimits?.primary;
@@ -24,7 +56,8 @@ function formatRateLimit(result, timeZone) {
 
 function queryCodexRateLimit({
   spawnProcess = spawn,
-  command = 'codex.exe',
+  command,
+  resolveCommand = resolveCodexCommand,
   timeoutMs = 8000,
   signal,
   timeZone
@@ -34,7 +67,7 @@ function queryCodexRateLimit({
   return new Promise((resolve, reject) => {
     let child;
     try {
-      child = spawnProcess(command, ['app-server'], {
+      child = spawnProcess(command || resolveCommand(), ['app-server'], {
         windowsHide: true,
         stdio: ['pipe', 'pipe', 'ignore']
       });
@@ -119,11 +152,11 @@ function queryCodexRateLimit({
         clientInfo: {
           name: 'remiel_desktop_pet',
           title: 'Remiel Desktop Pet',
-          version: '0.3.0'
+          version
         }
       }
     });
   });
 }
 
-module.exports = { queryCodexRateLimit };
+module.exports = { queryCodexRateLimit, resolveCodexCommand };
