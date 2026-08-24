@@ -1,0 +1,11 @@
+node_modules/
+.codegraph/
+artifacts/
+dist/
+release/
+*.log
+*.tmp
+.env
+.env.*
+!.env.example
+*.remiel-backup-*

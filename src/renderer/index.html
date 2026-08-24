@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; media-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'"
+    >
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>蕾米埃尔</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <video id="idle" autoplay muted loop playsinline preload="auto" src="../../assets/processed/idle.webm"></video>
+    <video id="click" hidden muted playsinline preload="auto" src="../../assets/processed/click.webm"></video>
+    <video id="message" hidden muted playsinline preload="auto" src="../../assets/processed/message.webm"></video>
+    <video id="dragPickup" hidden muted playsinline preload="auto" src="../../assets/processed/drag-pickup.webm"></video>
+    <img id="dragHold" hidden draggable="false" alt="" src="../../assets/processed/drag-hold.png">
+    <video id="dragRelease" hidden muted playsinline preload="auto" src="../../assets/processed/drag-release.webm"></video>
+    <script src="../domain/pet-machine.js"></script>
+    <script src="media-controller.js"></script>
+    <script src="renderer.js"></script>
+  </body>
+</html>

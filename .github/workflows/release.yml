@@ -1,0 +1,65 @@
+name: Build and release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build installer and portable app
+        run: npm run build
+
+      - name: Create checksums
+        shell: pwsh
+        run: |
+          $version = (Get-Content -LiteralPath package.json -Raw | ConvertFrom-Json).version
+          $files = @(
+            "dist/蕾米埃尔-Setup-$version.exe",
+            "dist/蕾米埃尔-Portable-$version.exe"
+          )
+          $lines = foreach ($file in $files) {
+            $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $file).Hash.ToLowerInvariant()
+            "$hash  $([IO.Path]::GetFileName($file))"
+          }
+          $lines | Set-Content -LiteralPath dist/SHA256SUMS.txt -Encoding utf8NoBOM
+
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $version = (Get-Content -LiteralPath package.json -Raw | ConvertFrom-Json).version
+          $assets = @(
+            "dist/蕾米埃尔-Setup-$version.exe",
+            "dist/蕾米埃尔-Portable-$version.exe",
+            'dist/SHA256SUMS.txt'
+          )
+          if (gh release view $tag 2>$null) {
+            gh release upload $tag @assets --clobber
+            exit $LASTEXITCODE
+          }
+          $options = @('--title', "蕾米埃尔 $version", '--generate-notes')
+          if ($tag.Contains('-')) { $options += '--prerelease' }
+          gh release create $tag @assets @options

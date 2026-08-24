@@ -1,0 +1,69 @@
+{
+  "name": "remiel-desktop-pet",
+  "productName": "蕾米埃尔",
+  "version": "0.4.0-beta.1",
+  "private": true,
+  "description": "蕾米埃尔 Windows 桌宠",
+  "license": "MIT",
+  "author": "Ch",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ch998244353/Remielle.git"
+  },
+  "homepage": "https://github.com/ch998244353/Remielle#readme",
+  "bugs": {
+    "url": "https://github.com/ch998244353/Remielle/issues"
+  },
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test",
+    "build": "electron-builder --win"
+  },
+  "build": {
+    "appId": "io.github.ch998244353.remielle",
+    "productName": "蕾米埃尔",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/processed/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/processed/app.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true,
+      "shortcutName": "蕾米埃尔",
+      "artifactName": "蕾米埃尔-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "蕾米埃尔-Portable-${version}.${ext}"
+    }
+  },
+  "devDependencies": {
+    "electron": "^43.4.1",
+    "electron-builder": "^26.15.3"
+  }
+}

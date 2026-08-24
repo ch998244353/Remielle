@@ -1,0 +1,87 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+  color: #5e3442;
+  font-family: "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  pointer-events: none;
+  user-select: none;
+}
+
+body {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 4px;
+}
+
+body[data-side="right"] {
+  padding-right: 2px;
+  padding-left: 14px;
+}
+
+body[data-side="left"] {
+  padding-right: 14px;
+  padding-left: 2px;
+}
+
+.bubble {
+  position: relative;
+  width: 100%;
+  min-height: 88px;
+  max-height: 152px;
+  padding: 16px 18px;
+  border: 2px solid #f3a8bd;
+  border-radius: 18px;
+  background: rgb(255 255 255 / 94%);
+}
+
+.bubble::before,
+.bubble::after {
+  position: absolute;
+  top: 46px;
+  width: 0;
+  height: 0;
+  content: "";
+}
+
+body[data-side="right"] .bubble::before {
+  left: -13px;
+  border-top: 10px solid transparent;
+  border-right: 13px solid #f3a8bd;
+  border-bottom: 10px solid transparent;
+}
+
+body[data-side="right"] .bubble::after {
+  left: -10px;
+  border-top: 8px solid transparent;
+  border-right: 11px solid rgb(255 255 255 / 94%);
+  border-bottom: 8px solid transparent;
+}
+
+body[data-side="left"] .bubble::before {
+  right: -13px;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 13px solid #f3a8bd;
+}
+
+body[data-side="left"] .bubble::after {
+  right: -10px;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 11px solid rgb(255 255 255 / 94%);
+}
+
+p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 1.55;
+}
