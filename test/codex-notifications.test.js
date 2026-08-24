@@ -8,6 +8,7 @@ const {
   createLineDecoder,
   createNotificationCoordinator,
   createPipeServer,
+  notificationBridgeRequired,
   notificationFromMessage,
   parseBridgeMessage
 } = require('../src/codex-notifications.js');
@@ -15,6 +16,7 @@ const {
 function bridgeMessage(overrides = {}) {
   return {
     version: 1,
+    source: 'codex',
     sessionId: 'session-1',
     turnId: 'turn-1',
     event: 'UserPromptSubmit',
@@ -31,6 +33,10 @@ test('Pipe 输入只接受白名单字段、已知事件和受限长度', () => 
   assert.equal(parseBridgeMessage(bridgeMessage({ detailText: 'x'.repeat(257) })), null);
   assert.equal(parseBridgeMessage(bridgeMessage({ sessionId: 'x'.repeat(129) })), null);
   assert.equal(parseBridgeMessage(bridgeMessage({ sentAt: -1 })), null);
+  assert.equal(parseBridgeMessage(bridgeMessage({ source: 'other' })), null);
+  const legacy = bridgeMessage();
+  delete legacy.source;
+  assert.equal(parseBridgeMessage(legacy).source, 'codex');
 });
 
 test('Named Pipe 支持分包和多消息，坏 JSON 与超长载荷只丢弃', {
@@ -83,32 +89,38 @@ test('分帧器对无换行残留设硬上限', () => {
 test('通知优先显示安全摘要，旧 Bridge 仍回退通用文案，最终由状态机限制 50 code points', () => {
   assert.equal(notificationFromMessage(bridgeMessage({
     detailText: '新任务：缩短气泡距离'
-  })).text, '新任务：缩短气泡距离');
+  })).text, 'Codex 新任务：缩短气泡距离');
   assert.equal(notificationFromMessage(bridgeMessage({
     event: 'PreToolUse',
     toolName: 'Bash',
     detailText: '正在运行 npm test'
-  })).text, '正在运行 npm test');
+  })).text, 'Codex 正在运行 npm test');
   assert.equal(notificationFromMessage(bridgeMessage({
     event: 'PermissionRequest',
     detailText: '等待确认：修改 package.json'
-  })).text, '等待确认：修改 package.json');
+  })).text, 'Codex 等待确认：修改 package.json');
   assert.equal(notificationFromMessage(bridgeMessage({
     event: 'PreToolUse',
     toolName: 'Bash'
-  })).text, '正在运行命令');
+  })).text, 'Codex 正在运行命令');
   assert.equal(notificationFromMessage(bridgeMessage({
     event: 'PreToolUse',
     toolName: 'apply_patch'
-  })).text, '正在修改文件');
+  })).text, 'Codex 正在修改文件');
   assert.equal(notificationFromMessage(bridgeMessage({
     event: 'PreToolUse',
     toolName: 'Agent'
-  })).text, '正在使用子智能体');
+  })).text, 'Codex 正在使用子智能体');
   assert.equal(notificationFromMessage(bridgeMessage({
     event: 'PreToolUse',
     toolName: 'mcp__service__tool'
-  })).text, '正在调用工具');
+  })).text, 'Codex 正在调用工具');
+
+  assert.equal(notificationFromMessage(bridgeMessage({
+    source: 'deepseek',
+    event: 'Stop',
+    detailText: '任务已取消'
+  })).text, 'DeepSeek 任务已取消');
 
   const mapped = notificationFromMessage(bridgeMessage({
     event: 'Stop',
@@ -144,7 +156,7 @@ test('当前通知回执后立即派发等待项，不依赖人物 idle 回执',
 
   coordinator.acknowledge({ id: sent[0].id, status: 'accepted' });
   assert.equal(sent.length, 2);
-  assert.equal(sent[1].text, '正在运行命令');
+  assert.equal(sent[1].text, 'Codex 正在运行命令');
 });
 
 test('调度器保持双槽、critical 优先和普通进度 3 秒节流', () => {
@@ -183,7 +195,7 @@ test('调度器保持双槽、critical 优先和普通进度 3 秒节流', () =>
   assert.equal(sent.length, 1);
   advance(1);
   assert.equal(sent.length, 2);
-  assert.equal(sent[1].text, '正在修改文件');
+  assert.equal(sent[1].text, 'Codex 正在修改文件');
 
   coordinator.acknowledge({ id: sent[1].id, status: 'busy' });
   assert.ok(coordinator.snapshot().ordinary);
@@ -203,5 +215,66 @@ test('调度器保持双槽、critical 优先和普通进度 3 秒节流', () =>
   }));
   assert.equal(coordinator.snapshot().critical, null);
   assert.ok(coordinator.snapshot().ordinary);
+  coordinator.dispose();
+});
+
+test('双来源以来源加会话为调度键，最近任务接管并保留来源标识', () => {
+  const sent = [];
+  const coordinator = createNotificationCoordinator({
+    send: (notification) => sent.push(notification),
+    throttleMs: 0
+  });
+
+  coordinator.push(bridgeMessage({ sessionId: 'same', sentAt: 1 }));
+  coordinator.acknowledge({ id: sent[0].id, status: 'accepted' });
+  coordinator.push(bridgeMessage({
+    source: 'deepseek',
+    sessionId: 'same',
+    event: 'UserPromptSubmit',
+    sentAt: 2
+  }));
+
+  assert.equal(sent[1].text, 'DeepSeek 开始处理任务');
+  assert.equal(coordinator.snapshot().activeSessionId, 'deepseek:same');
+  coordinator.dispose();
+});
+
+test('任一接入启用或待修复都保持共享通知 Pipe', () => {
+  assert.equal(notificationBridgeRequired('disabled', 'disabled'), false);
+  assert.equal(notificationBridgeRequired('enabled', 'disabled'), true);
+  assert.equal(notificationBridgeRequired('disabled', 'enabled'), true);
+  assert.equal(notificationBridgeRequired('disabled', 'needsRepair'), true);
+  assert.equal(notificationBridgeRequired('invalid', 'invalid'), false);
+});
+
+test('消息监控开关过滤新消息，并立即丢弃被关闭来源的当前与等待项', () => {
+  let monitorCodex = true;
+  let monitorDeepSeek = false;
+  const sent = [];
+  const coordinator = createNotificationCoordinator({
+    send: (notification) => sent.push(notification),
+    sourceEnabled: (source) => source === 'codex' ? monitorCodex : monitorDeepSeek,
+    throttleMs: 0
+  });
+
+  assert.equal(coordinator.push(bridgeMessage({ source: 'deepseek' })), false);
+  coordinator.push(bridgeMessage({ event: 'PermissionRequest' }));
+  coordinator.push(bridgeMessage({ event: 'PreToolUse', toolName: 'Bash' }));
+  assert.ok(coordinator.snapshot().inFlight);
+  assert.ok(coordinator.snapshot().ordinary);
+
+  monitorCodex = false;
+  coordinator.discardSource('codex');
+  assert.deepEqual(coordinator.snapshot(), {
+    activeSessionId: null,
+    ordinary: null,
+    critical: null,
+    inFlight: null,
+    rendererIdle: true
+  });
+
+  monitorDeepSeek = true;
+  assert.equal(coordinator.push(bridgeMessage({ source: 'deepseek' })), true);
+  assert.equal(sent.at(-1).text, 'DeepSeek 开始处理任务');
   coordinator.dispose();
 });

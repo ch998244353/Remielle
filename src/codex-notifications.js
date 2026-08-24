@@ -9,6 +9,7 @@ const ALLOWED_EVENTS = new Set([
 ]);
 const ALLOWED_FIELDS = new Set([
   'version',
+  'source',
   'sessionId',
   'turnId',
   'event',
@@ -35,6 +36,7 @@ function parseBridgeMessage(input) {
   if (Object.keys(value).some((key) => !ALLOWED_FIELDS.has(key))) return null;
   if (
     value.version !== 1 ||
+    (value.source !== undefined && value.source !== 'codex' && value.source !== 'deepseek') ||
     !validString(value.sessionId, 128) ||
     !validString(value.turnId, 128) ||
     !ALLOWED_EVENTS.has(value.event) ||
@@ -49,6 +51,7 @@ function parseBridgeMessage(input) {
   }
   return {
     version: 1,
+    source: value.source || 'codex',
     sessionId: value.sessionId,
     turnId: value.turnId,
     event: value.event,
@@ -64,34 +67,41 @@ function normalizeText(value) {
 }
 
 function notificationFromMessage(message) {
+  const label = message.source === 'deepseek' ? 'DeepSeek' : 'Codex';
+  const detail = normalizeText(message.detailText);
   if (message.event === 'UserPromptSubmit') {
-    return { kind: 'ordinary', text: normalizeText(message.detailText) || 'Codex 开始处理任务' };
+    return { kind: 'ordinary', text: detail ? `${label} ${detail}` : `${label} 开始处理任务` };
   }
   if (message.event === 'PermissionRequest') {
-    return { kind: 'critical', text: normalizeText(message.detailText) || 'Codex 正在等待你的确认' };
+    return { kind: 'critical', text: detail ? `${label} ${detail}` : `${label} 正在等待你的确认` };
   }
   if (message.event === 'Stop') {
     const summary = normalizeText(message.finalText);
     return {
       kind: 'critical',
-      text: summary ? `Codex 已结束：${summary}` : 'Codex 已结束'
+      text: detail || summary
+        ? `${label} ${detail || `已结束：${summary}`}`
+        : `${label} 已结束`
     };
   }
 
-  const detail = normalizeText(message.detailText);
-  if (detail) return { kind: 'ordinary', text: detail };
+  if (detail) return { kind: 'ordinary', text: `${label} ${detail}` };
 
   const toolName = message.toolName || '';
   if (/^(Bash|exec_command|write_stdin)$/iu.test(toolName)) {
-    return { kind: 'ordinary', text: '正在运行命令' };
+    return { kind: 'ordinary', text: `${label} 正在运行命令` };
   }
   if (/^(apply_patch|Edit|Write)$/iu.test(toolName)) {
-    return { kind: 'ordinary', text: '正在修改文件' };
+    return { kind: 'ordinary', text: `${label} 正在修改文件` };
   }
   if (/^(Agent|spawn_agent|send_message|followup_task)$/iu.test(toolName)) {
-    return { kind: 'ordinary', text: '正在使用子智能体' };
+    return { kind: 'ordinary', text: `${label} 正在使用子智能体` };
   }
-  return { kind: 'ordinary', text: '正在调用工具' };
+  return { kind: 'ordinary', text: `${label} 正在调用工具` };
+}
+
+function notificationBridgeRequired(...states) {
+  return states.some((state) => state === 'enabled' || state === 'needsRepair');
 }
 
 function createNotificationCoordinator({
@@ -100,9 +110,11 @@ function createNotificationCoordinator({
   schedule = setTimeout,
   cancelSchedule = clearTimeout,
   throttleMs = 3000,
-  initiallyIdle = true
+  initiallyIdle = true,
+  sourceEnabled = () => true
 }) {
   if (typeof send !== 'function') throw new TypeError('send must be a function');
+  if (typeof sourceEnabled !== 'function') throw new TypeError('sourceEnabled must be a function');
   let activeSessionId = null;
   let ordinarySlot = null;
   let criticalSlot = null;
@@ -149,8 +161,10 @@ function createNotificationCoordinator({
   function push(message) {
     const parsed = parseBridgeMessage(message);
     if (!parsed) return false;
-    if (parsed.sessionId !== activeSessionId) {
-      activeSessionId = parsed.sessionId;
+    if (!sourceEnabled(parsed.source)) return false;
+    const sessionKey = `${parsed.source}:${parsed.sessionId}`;
+    if (sessionKey !== activeSessionId) {
+      activeSessionId = sessionKey;
       ordinarySlot = null;
       criticalSlot = null;
       cancelTimer();
@@ -158,8 +172,9 @@ function createNotificationCoordinator({
     const mapped = notificationFromMessage(parsed);
     const notification = {
       ...mapped,
-      id: `${parsed.sessionId.slice(0, 24)}-${++sequence}`,
-      sessionId: parsed.sessionId
+      id: `${parsed.source[0]}-${parsed.sessionId.slice(0, 22)}-${++sequence}`,
+      sessionId: sessionKey,
+      source: parsed.source
     };
     if (mapped.kind === 'critical') criticalSlot = notification;
     else ordinarySlot = notification;
@@ -194,6 +209,29 @@ function createNotificationCoordinator({
     flush();
   }
 
+  function discardSource(source) {
+    if (source !== 'codex' && source !== 'deepseek') return false;
+    let discarded = false;
+    if (ordinarySlot?.source === source) {
+      ordinarySlot = null;
+      discarded = true;
+    }
+    if (criticalSlot?.source === source) {
+      criticalSlot = null;
+      discarded = true;
+    }
+    if (inFlight?.source === source) {
+      inFlight = null;
+      discarded = true;
+    }
+    if (activeSessionId?.startsWith(`${source}:`)) activeSessionId = null;
+    if (discarded) {
+      cancelTimer();
+      flush();
+    }
+    return discarded;
+  }
+
   function dispose() {
     cancelTimer();
     ordinarySlot = null;
@@ -211,7 +249,7 @@ function createNotificationCoordinator({
     };
   }
 
-  return { acknowledge, dispose, flush, idle, push, snapshot };
+  return { acknowledge, discardSource, dispose, flush, idle, push, snapshot };
 }
 
 function createLineDecoder(onMessage, maximumBytes = MAX_MESSAGE_BYTES) {
@@ -259,6 +297,7 @@ module.exports = {
   createLineDecoder,
   createNotificationCoordinator,
   createPipeServer,
+  notificationBridgeRequired,
   notificationFromMessage,
   parseBridgeMessage
 };

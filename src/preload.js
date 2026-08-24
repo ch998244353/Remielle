@@ -10,7 +10,7 @@ contextBridge.exposeInMainWorld('petApi', {
   startDrag: (x, y) => sendPoint('drag:start', x, y),
   moveDrag: () => ipcRenderer.send('drag:move'),
   endDrag: () => ipcRenderer.send('drag:end'),
-  requestCodexRateLimit: () => ipcRenderer.invoke('codex:rate-limit'),
+  requestBalance: () => ipcRenderer.invoke('balance:read'),
   showBubble: (text) => {
     if (typeof text === 'string') ipcRenderer.send('bubble:show', text);
   },

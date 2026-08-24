@@ -26,14 +26,14 @@ test('人物绑定六种运行媒体，拖动保持帧和额度 IPC 保持窄边
   assert.match(css, /body\[data-mirrored="true"\] img/u);
   assert.doesNotMatch(preload, /hooks\.json|powershell|child_process|auth/iu);
   assert.match(preload, /codex:notification-result/u);
-  assert.match(preload, /requestCodexRateLimit/u);
-  assert.match(preload, /invoke\('codex:rate-limit'\)/u);
+  assert.match(preload, /requestBalance/u);
+  assert.match(preload, /invoke\('balance:read'\)/u);
   assert.match(preload, /character:idle/u);
   assert.doesNotMatch(preload, /completeDrag/u);
   assert.match(renderer, /dragPickup|dragHold|dragRelease/u);
   assert.match(renderer, /after\.dragging/u);
   assert.match(renderer, /result\.animate/u);
-  assert.match(renderer, /requestCodexRateLimit/u);
+  assert.match(renderer, /requestBalance/u);
 });
 
 test('Codex 通知启用提示区分配置已写入与桌面任务已加载', async () => {
@@ -49,7 +49,7 @@ test('托盘仅保留安全入口，桌宠右键承载外观和位置操作', as
   const tray = main.match(/function buildTrayTemplate\(\) \{[\s\S]*?^\}/mu)?.[0] || '';
   const pet = main.match(/function buildPetTemplate\(\) \{[\s\S]*?^\}/mu)?.[0] || '';
 
-  for (const label of ['显示/隐藏', '停止交互', 'Codex 通知', '退出']) {
+  for (const label of ['显示/隐藏', '停止交互', 'Codex 通知', 'DeepSeek Harness', '退出']) {
     assert.match(tray, new RegExp(label, 'u'));
   }
   assert.doesNotMatch(tray, /人物左右翻转|信息方向|模拟收到消息|回到屏幕内|人物变大/u);
@@ -62,6 +62,12 @@ test('托盘仅保留安全入口，桌宠右键承载外观和位置操作', as
     '人物变小',
     '信息窗口变大',
     '信息窗口变小',
+    '余额来源',
+    '消息监控',
+    'Codex 消息',
+    'DeepSeek 消息',
+    'Codex',
+    'DeepSeek',
     '模拟收到消息',
     '回到屏幕内'
   ]) assert.match(pet, new RegExp(label, 'u'));

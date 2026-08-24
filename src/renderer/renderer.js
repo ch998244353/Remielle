@@ -75,7 +75,7 @@ function finishPointer(event, eventType) {
   const after = machine.getSnapshot();
   if (eventType === 'pointerUp' && !before.dragging) {
     globalThis.petApi.hideBubble();
-    globalThis.petApi.requestCodexRateLimit().catch(() => {});
+    globalThis.petApi.requestBalance().catch(() => {});
   }
   if (after.state !== before.state) renderState();
   if (after.state === 'idle') globalThis.petApi.notifyIdle();

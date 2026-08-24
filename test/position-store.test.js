@@ -26,7 +26,10 @@ test('位置配置容忍缺失和损坏，并以同目录临时文件原子替�
     scale: 1,
     bubbleScale: 1,
     mirrored: false,
-    bubbleSide: 'right'
+    bubbleSide: 'right',
+    balanceSource: 'codex',
+    monitorCodex: true,
+    monitorDeepSeek: true
   });
   await savePosition(file, {
     x: 320,
@@ -34,7 +37,10 @@ test('位置配置容忍缺失和损坏，并以同目录临时文件原子替�
     scale: 1.5,
     bubbleScale: 0.75,
     mirrored: true,
-    bubbleSide: 'left'
+    bubbleSide: 'left',
+    balanceSource: 'deepseek',
+    monitorCodex: false,
+    monitorDeepSeek: true
   });
   assert.deepEqual(await loadPosition(file), {
     version: 1,
@@ -43,7 +49,10 @@ test('位置配置容忍缺失和损坏，并以同目录临时文件原子替�
     scale: 1.5,
     bubbleScale: 0.75,
     mirrored: true,
-    bubbleSide: 'left'
+    bubbleSide: 'left',
+    balanceSource: 'deepseek',
+    monitorCodex: false,
+    monitorDeepSeek: true
   });
   assert.deepEqual(await fs.readdir(directory), ['position.json']);
 });
@@ -53,29 +62,44 @@ test('旧配置与损坏偏好分别回退，合法视觉偏好保持', () => {
     scale: 1,
     bubbleScale: 1,
     mirrored: false,
-    bubbleSide: 'right'
+    bubbleSide: 'right',
+    balanceSource: 'codex',
+    monitorCodex: true,
+    monitorDeepSeek: true
   });
   assert.deepEqual(normalizePreferences({
     scale: 0.6,
     bubbleScale: 2,
     mirrored: 'true',
-    bubbleSide: 'up'
+    bubbleSide: 'up',
+    balanceSource: 'other',
+    monitorCodex: 'yes',
+    monitorDeepSeek: 0
   }), {
     scale: 1,
     bubbleScale: 1,
     mirrored: false,
-    bubbleSide: 'right'
+    bubbleSide: 'right',
+    balanceSource: 'codex',
+    monitorCodex: true,
+    monitorDeepSeek: true
   });
   assert.deepEqual(normalizePreferences({
     scale: 0.5,
     bubbleScale: 1.25,
     mirrored: true,
-    bubbleSide: 'left'
+    bubbleSide: 'left',
+    balanceSource: 'deepseek',
+    monitorCodex: false,
+    monitorDeepSeek: false
   }), {
     scale: 0.5,
     bubbleScale: 1.25,
     mirrored: true,
-    bubbleSide: 'left'
+    bubbleSide: 'left',
+    balanceSource: 'deepseek',
+    monitorCodex: false,
+    monitorDeepSeek: false
   });
 });
 
@@ -92,7 +116,10 @@ test('连续偏好变更串行原子保存，最后一次写入生效且不残�
       scale: 1.5,
       bubbleScale: 0.5,
       mirrored: true,
-      bubbleSide: 'left'
+      bubbleSide: 'left',
+      balanceSource: 'deepseek',
+      monitorCodex: true,
+      monitorDeepSeek: false
     })
   ]);
   assert.deepEqual(await loadPosition(file), {
@@ -102,7 +129,10 @@ test('连续偏好变更串行原子保存，最后一次写入生效且不残�
     scale: 1.5,
     bubbleScale: 0.5,
     mirrored: true,
-    bubbleSide: 'left'
+    bubbleSide: 'left',
+    balanceSource: 'deepseek',
+    monitorCodex: true,
+    monitorDeepSeek: false
   });
   assert.deepEqual(await fs.readdir(directory), ['position.json']);
 });

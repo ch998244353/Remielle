@@ -12,7 +12,10 @@ function normalizePreferences(config) {
     mirrored: typeof config?.mirrored === 'boolean' ? config.mirrored : false,
     bubbleSide: config?.bubbleSide === 'left' || config?.bubbleSide === 'right'
       ? config.bubbleSide
-      : 'right'
+      : 'right',
+    balanceSource: config?.balanceSource === 'deepseek' ? 'deepseek' : 'codex',
+    monitorCodex: typeof config?.monitorCodex === 'boolean' ? config.monitorCodex : true,
+    monitorDeepSeek: typeof config?.monitorDeepSeek === 'boolean' ? config.monitorDeepSeek : true
   };
 }
 

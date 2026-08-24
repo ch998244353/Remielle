@@ -38,7 +38,10 @@ test('首次运行启用通知后写入 Hook 与位置，并给出成功结果',
     scale: 1,
     bubbleScale: 1,
     mirrored: false,
-    bubbleSide: 'right'
+    bubbleSide: 'right',
+    balanceSource: 'codex',
+    monitorCodex: true,
+    monitorDeepSeek: true
   });
   assert.deepEqual(results, [{ enabled: true, error: null }]);
 });

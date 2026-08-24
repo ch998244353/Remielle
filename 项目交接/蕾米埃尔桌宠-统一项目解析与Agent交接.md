@@ -2,23 +2,44 @@
 
 | 项目项 | 当前值 |
 | --- | --- |
-| 最后更新 | 2026-08-24 |
-| 当前版本 | 0.4.0-beta.1 |
+| 最后更新 | 2026-08-25 |
+| 当前版本 | 0.4.0-beta.2 |
 | 项目目录 | `<仓库根目录>` |
 | 公开仓库 | `https://github.com/ch998244353/Remielle`（`main`） |
 | 许可证 | MIT；代码与全部角色素材统一适用 |
 | 技术栈 | Electron 43、原生 JavaScript、HTML/CSS、Node.js 内置模块 |
 | 运行入口 | `package.json` → `src/main.js` |
-| 当前本地构建物 | `dist/蕾米埃尔-Setup-0.4.0-beta.1.exe`、`dist/蕾米埃尔-Portable-0.4.0-beta.1.exe` |
+| 当前本地构建物 | `dist/蕾米埃尔-Setup-0.4.0-beta.2.exe`、`dist/蕾米埃尔-Portable-0.4.0-beta.2.exe` |
 | 当前公开发布 | `https://github.com/ch998244353/Remielle/releases/tag/v0.4.0-beta.1`，Pre-release |
-| 自动测试 | 42/42 PASS（2026-08-24 重新验证） |
+| 自动测试 | 49/49 PASS（2026-08-24 右键双源开关后重新验证） |
 | 文档定位 | 唯一架构、接口、验证和交接事实源 |
 
 下一位 Agent 不需要寻找旧设计书、旧验收截图或先前对话；先读本文，再用 CodeGraph 定位任务涉及的符号，最后只读取被点名的源码和测试。
 
+## 0. 下一位 Agent 的 30 秒入口
+
+| 先确认什么 | 当前事实 | 接手动作 |
+| --- | --- | --- |
+| 代码基线 | 工作区含本轮 DeepSeek Harness 双接入、右键双源开关、测试、本文修改与本地 `0.4.0-beta.2` 构建；尚未提交；`npm test` 为 49/49 PASS | 先运行 `git status --short --branch`；继续修改前跑对应聚焦测试，不要覆盖当前改动 |
+| 结构索引 | CodeGraph 健康，当前索引覆盖第一方 JavaScript 与发布工作流 | 结构、调用关系和影响范围先问 CodeGraph，不递归扫描依赖或素材 |
+| 当前发布 | GitHub Pre-release 仍为 `v0.4.0-beta.1`；本地 `dist/` 只保留新构建的 `0.4.0-beta.2` Setup 与 Portable | 发布任务才读取第 13–15 节并重新复算哈希 |
+| 本机安装 | 已从 GitHub Release 下载并验证 Setup SHA-256 `CCE31469EB15EEE6A64D4C4EF28268CADE9ACF85D4427BE0F1EEB1FD2DB15BD7`，完成纯净重装和首次运行一键启用 | 不要再重装；下一步只完成 Hook 信任与桌面端复验 |
+| Hook 当前阻塞 | 四条蕾米埃尔 Hook、转发脚本和 Named Pipe 已恢复，用户已看到正确气泡消息；但新定义仍显示 4 条待审核，持久化信任为 0/4，Codex Desktop 尚未完全重启 | 在 CLI `/hooks` 逐条审核信任，再完全退出/重开 Codex Desktop，用真实新本地任务验收 |
+| DeepSeek 当前状态 | 默认 `DSH_HOME` 的 `web` profile 已安装 `remiel-dsh-bridge`；真实 `0.1.1-rc.2` 临时 Harness 已通过真实 Key 余额查询 | 安装前已经运行的 Harness 进程尚未加载 Bundle，必须完全退出并重开；真实 lifecycle 通知仍需单独验收 |
+| 生命周期验收 | Hook → PowerShell → Pipe → 气泡链路可用；尚不能据此宣称“干净重装后的桌面端正式接入完成” | 只有 4/4 信任、完整重启和真实桌面任务消息三项同时成立，才把 `PARTIAL` 改为完成 |
+| 工作区清理 | 2026-08-24 已确认无临时文件、日志、补丁残留或旧文档；空的忽略目录 `release/` 已移入回收站 | 保留源码、测试、两套素材、`node_modules/`、`.codegraph/` 和当前 `dist/` 发布物 |
+
+| 修改类型 | 优先阅读 | 修改入口 |
+| --- | --- | --- |
+| 人物动作、拖动或切换闪烁 | 第 3、5、14 节 | 状态机、renderer、媒体控制器及其聚焦测试 |
+| 气泡位置、缩放、置顶或消息计时 | 第 3、7、14 节 | 窗口几何、主进程、气泡窗口及契约测试 |
+| Codex Hook、通知摘要或额度 | 第 6、8–11、14 节 | Hook、通知协调器、额度客户端及安全边界测试 |
+| DeepSeek Harness、余额或双源通知 | 第 3、6–9、12–14 节 | `deepseek-harness.js`、内置 Bundle、通知协调器及其安全测试 |
+| 构建、GitHub Release 或目录清理 | 第 13–15 节 | 只处理明确生成物；不得删除原素材或覆盖受保护发布物 |
+
 ## 1. 项目目标与真实边界
 
-蕾米埃尔是一个开源的 Windows x64 Electron 桌宠。人物动作、任意时刻拖动、气泡、托盘、独立缩放和外观已经完成；0.3.0 增加了单击额度查询、无闪媒体切换和按下时状态决定的拖动动作锁；0.4.0 Beta 缩短气泡到头部的距离、增加安全通知摘要和首次运行向导，并同时发行 NSIS 与 Portable。
+蕾米埃尔是一个开源的 Windows x64 Electron 桌宠。人物动作、任意时刻拖动、气泡、托盘、独立缩放和外观已经完成；0.3.0 增加了单击额度查询、无闪媒体切换和按下时状态决定的拖动动作锁；0.4.0 Beta 缩短气泡到头部的距离、增加安全通知摘要和首次运行向导，并同时发行 NSIS 与 Portable。当前工作区在保留全部 Codex 能力的同时新增 DeepSeek Harness 双接入，已生成本地 `0.4.0-beta.2` Setup/Portable，但尚未发布新的 GitHub Release。
 
 | 能力或边界 | 当前设计 |
 | --- | --- |
@@ -26,12 +47,14 @@
 | 外观 | 人物与气泡独立五档缩放、人物镜像、气泡左右偏好、多屏约束 |
 | Codex 通知 | 用户主动安装并审核信任的四类 lifecycle Hook，经隐藏 PowerShell 清洗和本机 Named Pipe 传入 |
 | Codex 额度 | 单击时临时启动 PATH 中的 `codex.exe app-server`，只调用 `account/rateLimits/read` |
+| DeepSeek Harness 通知 | 用户从托盘把内置 `remiel-dsh-bridge` Bundle 安装到官方 `web` profile；插件只监听 `session/event` 并发送受限摘要 |
+| DeepSeek 余额 | 单击时连接插件拥有的只读余额 Pipe；插件每次临时解析 `DEEPSEEK_API_KEY` 并请求官方 `GET /user/balance`，Key 不进入桌宠进程或 Pipe |
 | 非聊天客户端 | 没有输入框、历史面板、计划面板或审批按钮 |
-| 隐私边界 | 只从 Hook 输入生成任务开头与安全操作摘要；不把完整提示词、完整工具输入、命令参数、工具输出、完整路径、模型、认证信息或 transcript 送入 Pipe |
+| 隐私边界 | Codex Hook 与 DeepSeek 插件都只生成任务开头与安全操作摘要；不把完整提示词、完整工具输入、命令参数、工具输出、完整路径、模型、认证信息或 transcript 送入 Pipe |
 | 审批边界 | 不自动允许或拒绝权限；审批仍在 Codex 原界面完成 |
 | App Server 边界 | 不创建、恢复或读取 Thread/Turn；成功、失败或 8 秒超时后终止临时进程 |
 | Hook 适用范围 | 用户级 Hook 也可能接收 CLI/IDE 任务事件，不保证只来自桌面 UI |
-| 当前任务定义 | 最近产生合法 Hook 事件的 `sessionId`，不是视觉上的前台窗口 |
+| 当前任务定义 | 最近产生合法事件的 `source + sessionId`，不是视觉上的前台窗口 |
 | 明确不伪造 | Hosted WebSearch、完整计划、流式思考、精确失败或中断原因 |
 
 官方资料：
@@ -47,7 +70,7 @@
 | --- | --- | --- |
 | 技术实现 | 完成 | Electron 原生 JavaScript；无前端框架、网络服务或新增运行时依赖 |
 | 窗口 | 完成 | 人物与气泡均为无边框透明窗口，`skipTaskbar: true`；气泡使用 `screen-saver` 置顶层级并保持鼠标穿透 |
-| 菜单 | 完成 | 托盘保留安全入口；人物右键承载外观、缩放、模拟消息与回屏 |
+| 菜单 | 完成 | 托盘承载 Codex/DeepSeek 接入配置；人物右键直接显示余额来源和消息监控状态，并承载对应开关、外观、缩放、模拟消息与回屏 |
 | 拖动动作锁 | 完成 | 物理拖动始终可用；只有待机起始手势进入拿起、保持、放下 |
 | 非待机互斥 | 完成 | 锁定期间消息只更新 6 秒气泡，不覆盖、重启或补播人物动作 |
 | 媒体切换 | 完成 | 目标首帧或图片绘制就绪后原子切换；过期回调无效；不交叉淡化 |
@@ -56,31 +79,40 @@
 | 气泡到头部距离 | 完成 | 气泡与头部分处人物两端时内移人物宽度四分之一；同侧仍保持 4 DIP 边界间隔 |
 | 额度查询 | 完成 | 待机单击同时播放动作并查询；非待机单击只查询；并发复用 |
 | Codex 通知链路 | 已实现 | Hook 安装/卸载、备份、转发、Pipe、清洗、双槽调度和渲染均已实现 |
+| DeepSeek Harness 接入 | 已实现 | 固定 `@deepseek-ai/dsh@0.1.1-rc.2`、`web` profile、Bundle 暂存/启停、余额 Pipe 和 lifecycle 摘要；其他版本只返回“不支持” |
+| 双源余额选择 | 已实现 | 人物右键在 Codex/DeepSeek 间单选；`balanceSource` 持久化，旧配置默认 Codex；单击动作链不变 |
+| 双源消息监控开关 | 已实现 | 人物右键分别勾选 Codex/DeepSeek，可同时、单独或全部关闭；旧配置默认同时监控，关闭来源时立即清理其当前与等待通知 |
 | 安全通知摘要 | 已实现 | Bridge v1 可选 `detailText`；任务开头、安全命令、basename、审批和结束摘要均由 PowerShell 在 Pipe 前生成 |
 | 首次运行向导 | 已实现 | 无有效 `position.json` 时原生选择启用或跳过；结束即保存位置；启用后要求完全重启并在 `/hooks` 审核信任 |
-| 自动测试 | 通过 | `npm test`：42/42 PASS |
+| 自动测试 | 通过 | `npm test`：49/49 PASS |
 | 本地构建 | 通过 | NSIS 与 Portable 均已生成；ASAR 内容、安装/卸载入口、桌面/开始菜单快捷方式和 Portable 启动已复核 |
 | GitHub 发布 | 通过 | Actions run `32706419364` 成功；Pre-release 三个资产完整；回下载两个 EXE 与 `SHA256SUMS.txt` 一致 |
+| GitHub 纯净重装 | 通过 | 2026-08-24 已卸载旧安装、重置蕾米埃尔 userData、清除自身 Hook/旧信任，再从公开 Release 下载固定哈希 Setup 并完成首次运行 |
+| Hook 重新信任 | 待完成 | 新 CLI 明确显示 4 hooks need review；四条蕾米埃尔 `trusted_hash` 尚未重新写入，不得绕过信任 |
 | 桌面快捷方式 | 有效 | `%USERPROFILE%\Desktop\蕾米埃尔.lnk` 指向当前用户安装的 0.4.0 Beta；旧 0.3.0 快捷方式已进回收站 |
 | 开发态实机 | 通过 | 2026-08-24 已验证拖动锁、消息、点击、取消、位置保存、额度、菜单、缩放和计时 |
+| DeepSeek 真实烟雾 | 通过（真实 Key 余额） | 默认 `DSH_HOME` 的真实 `0.1.1-rc.2` `web` profile 已安装 Bundle；隔离端口临时 Harness 成功加载，余额 Pipe 返回合法真实余额；未读取、记录或复制 Key，临时进程已清理 |
+| DeepSeek 真实任务 lifecycle | 未验证 | 不得宣称真实 Harness lifecycle 通知已通过；事件映射与安全边界仍只用固定假事件验证 |
 
 | 正式验收事实 | 状态 |
 | --- | --- |
-| 2026-08-23 桌面 app-server 17:14 已启动，Hook 21:55 才写入，旧任务未执行新增 Hook | 已定位 |
-| `~/.codex/hooks.json` 有效，Hook 为 `[x]`、`Trust: Trusted` | 已确认 |
+| 2026-08-24 从公开 GitHub Release 完成卸载、用户数据重置、Hook/旧信任清理和 Setup 重装 | 已确认 |
+| 首次运行向导重新生成有效 `position.json`、转发脚本和四条 `~/.codex/hooks.json` handler | 已确认 |
+| 新 CLI 显示四条蕾米埃尔 Hook 为 `new or changed`、Active 0、需要审核；持久化信任为 0/4 | 待用户审核 |
 | 普通 Codex CLI 的真实 `UserPromptSubmit` 会运行 Hook | 已确认 |
 | 桌面安装包内置 `codex.exe 0.149.0-alpha.4.1` 的新进程会运行同一 Hook | 已确认 |
-| Hook → PowerShell → Named Pipe → 桌宠消息窗口 | 已确认 |
-| 完全退出并重开 Codex 桌面应用后，在真实桌面任务中收到通知 | 待用户确认 |
+| 用户已经看到正确气泡消息，证明 Hook → PowerShell → Named Pipe → 桌宠窗口链路可用 | 已确认，但不等于新信任/重启完成 |
+| 当前 Codex Desktop app-server 启动早于重装后的 Hook 写入，尚未完成完全退出和重开 | 待用户操作 |
+| 完全退出并重开 Codex 桌面应用后，在真实新本地任务中收到通知 | 待用户确认 |
 | 生命周期通知总体验收 | `PARTIAL`，不得写正式完成 |
 
-官方文档明确要求非托管 Hook 按当前定义哈希审核并信任，但没有明确承诺 `hooks.json` 会被已运行的桌面任务热加载。“完全退出并重开”是基于本机启动时间、配置写入时间和新进程对照实验得到的诊断结论。
+官方文档明确要求非托管 Hook 按当前定义哈希审核并信任，但没有明确承诺 `hooks.json` 会被已运行的桌面任务热加载。当前旧桌面进程可能继续使用内存中已加载的旧定义，因此“能看到消息”只能证明传输与显示链路，不能替代新定义 4/4 信任和完全重启验收。
 
 ## 3. 架构分层、职责与关键流程
 
 | 层或组件 | 主要职责 | 输入 | 输出或副作用 | 所有者 |
 | --- | --- | --- | --- | --- |
-| Electron 主进程 | 单实例、窗口、菜单、托盘、IPC、拖动、气泡、持久化、Codex 生命周期 | renderer IPC、Hook Pipe、用户菜单、屏幕变化 | 移动窗口、保存配置、推送消息、启动/终止临时子进程 | `src/main.js` |
+| Electron 主进程 | 单实例、窗口、菜单、托盘、IPC、拖动、气泡、持久化和双接入编排 | renderer IPC、通知 Pipe、用户菜单、屏幕变化 | 移动窗口、保存配置、推送消息、启动/终止受限子进程 | `src/main.js` |
 | 人物 preload | renderer 的唯一窄能力门面 | 经过类型检查的参数和回调 | 固定 IPC；不暴露 Node、文件或进程能力 | `src/preload.js` |
 | 人物 renderer | DOM 指针事件、状态机驱动、媒体切换、通知回执 | 指针、主进程事件 | 状态事件、拖动 IPC、气泡请求 | `src/renderer/*` |
 | 纯领域层 | 人物状态与屏幕几何，不依赖 Electron | 状态事件、尺寸、坐标和工作区 | 新状态、规范化文本、受限坐标 | `src/domain/*` |
@@ -88,8 +120,10 @@
 | 媒体控制器 | 保留旧画面直到目标首帧/图片就绪 | 人物状态 | 原子媒体可见性切换 | `src/renderer/media-controller.js` |
 | Hook 配置层 | 安装、修复、卸载和备份用户 Hook | 用户菜单、`hooks.json` | 原子更新配置和转发脚本 | `src/codex-hook.js` |
 | Hook 运行桥 | 白名单提取并快速写入本机 Pipe | Codex lifecycle JSON | 单行 UTF-8 JSON；失败时快速无操作退出 | 自动生成 PowerShell + `src/codex-notifications.js` |
-| 通知协调器 | 校验、映射、节流、双槽与会话切换 | 合法 Pipe 消息和 renderer 回执 | 有界桌宠通知 | `src/codex-notifications.js` |
+| 通知协调器 | 校验、来源标记、节流、双槽与会话切换 | Codex/DeepSeek 合法 Pipe 消息和 renderer 回执 | 有界桌宠通知 | `src/codex-notifications.js` |
 | 额度客户端 | 临时 App Server JSONL 握手与格式化 | renderer 单击 | 一条额度/失败气泡，随后终止子进程 | `src/codex-rate-limit.js` |
+| DeepSeek 桌宠侧 | Bundle 暂存、固定 CLI、profile 状态与余额 Pipe 客户端 | 托盘操作、renderer 单击 | 只改 `web` profile；只接收短文案/固定错误码 | `src/deepseek-harness.js` |
+| DeepSeek Harness Bundle | 监听 `session/event`、安全摘要、临时解析 Key、官方余额请求 | Harness 会话事件、`ctx.credentials` | 双源通知 Pipe 或余额 Pipe；不改变 Harness 任务 | `src/integrations/deepseek-harness/*` |
 | 配置存储 | 兼容读取和串行原子保存 | 位置和视觉偏好 | Electron userData 下的 `position.json` | `src/position-store.js` |
 | 首次运行协调 | 以有效配置是否存在为唯一判断，串联选择、启用结果与位置保存 | `savedPosition` 与注入回调 | 只首轮显示；不增加配置版本或状态文件 | `src/first-run.js`、`src/main.js` |
 | 构建与发布层 | 测试、素材校验、NSIS/Portable 打包、标签自动 Release | 源码、处理后素材、锁文件、Git 标签 | 两个 EXE、`SHA256SUMS.txt` 与 Pre-release/Release | `package.json`、`scripts/*`、`.github/workflows/release.yml` |
@@ -100,8 +134,10 @@
 | 拖动 | `pointerdown/move/up/cancel` | renderer → 状态机 → preload → main → 几何约束 → 持久化 | 松手立即保存；人物动作按资格锁运行 |
 | 本地消息 | 人物菜单 | main → `message:local` → `showMessage()` → 气泡/可选人物动作 | 气泡显示并重置 6 秒计时 |
 | Codex 通知 | lifecycle Hook | PowerShell → Named Pipe → 校验/调度 → renderer → 回执 | 当前槽收到回执，协调器继续派发 |
-| 额度查询 | 单击人物 | renderer → `codex:rate-limit` → App Server JSONL → 气泡 | 返回格式化结果或统一失败文案并清理进程 |
+| DeepSeek 通知 | Harness `session/event` | Bundle 安全映射 → 通知 Pipe → 双源调度 → renderer → 回执 | 只读观察；余额 Pipe 冲突不影响 lifecycle 通知 |
+| 额度查询 | 单击人物 | renderer → `balance:read` → 当前来源的 Codex App Server 或 DeepSeek 余额 Pipe → 气泡 | 返回格式化结果/固定失败文案；人物动作链保持不变 |
 | Hook 安装 | 托盘菜单 | main → 配置校验/备份 → 原子写入 → 启动 Pipe | 文件状态符合当前 handler；不等于当前任务已加载 |
+| DeepSeek Bundle 安装 | 托盘菜单 | main → userData 暂存 → 固定 rc.2 `plugin --profile web add/remove` | 只修改 `web` profile；提示完全重启 Harness，不声称当前进程已加载 |
 | 发布 | `v*` 标签或本地 `npm run build` | `npm ci` → 测试 → electron-builder → ASAR/哈希检查 → GitHub Release | Beta 标签为 Pre-release；稳定标签为正式 Release |
 
 ## 4. 程序启动流程
@@ -124,7 +160,7 @@
 
 - 第二次启动不会创建第二只桌宠，只会把已有角色恢复到屏幕内并显示。
 - 人物窗口基准内容尺寸为 432×300 DIP；气泡为 328×160 DIP，二者分别按自己的五档缩放值计算。
-- 启动时 `停止交互` 总是关闭；位置、人物缩放、气泡缩放、镜像和气泡优先侧从 `position.json` 恢复。
+- 启动时 `停止交互` 总是关闭；位置、人物缩放、气泡缩放、镜像、气泡优先侧、余额来源和两个消息监控开关从 `position.json` 恢复；旧配置默认余额来源为 Codex、同时监控两种消息。
 - 有效 `position.json` 是首次向导的唯一跳过条件；不增加 onboarding 字段或单独状态文件。
 - 显示器移除或分辨率变化时，人物会重新限制到可见工作区并保存位置。
 
@@ -176,7 +212,7 @@ pointerdown / move / up / cancel
 
 ## 6. 接口契约与信任边界
 
-运行时没有对外网络 API。所谓“接口”是 context-isolated preload 门面、Electron IPC、纯模块函数、Named Pipe 消息和本地配置；renderer 不直接获得 Node.js、文件系统、认证文件或子进程能力。
+Electron 桌宠进程没有对外网络 API。DeepSeek 官方余额请求只发生在 Harness 插件进程内；其余接口是 context-isolated preload 门面、Electron IPC、纯模块函数、Named Pipe 消息和本地配置。renderer 不直接获得 Node.js、文件系统、认证文件或子进程能力。
 
 ### 人物 preload：`globalThis.petApi`
 
@@ -185,7 +221,7 @@ pointerdown / move / up / cancel
 | `startDrag(x, y)` | `drag:start` → main | 两个有限数值；无返回 | preload 和 main 双重校验坐标；main 还校验发送者及交互锁 |
 | `moveDrag()` | `drag:move` → main | 无参数；无返回 | main 校验人物 webContents 和有效拖动会话，位置取 Electron 当前绝对光标 |
 | `endDrag()` | `drag:end` → main | 无参数；无返回 | main 校验发送者；仅实际移动后原子保存位置 |
-| `requestCodexRateLimit()` | `codex:rate-limit` ⇄ main | `Promise<string>` | main 校验发送者；并发复用；成功或统一失败文案均返回字符串并显示气泡 |
+| `requestBalance()` | `balance:read` ⇄ main | `Promise<string>` | main 校验发送者并按持久化来源分流；两种来源都并发复用；只返回短文案并显示气泡 |
 | `showBubble(text)` | `bubble:show` → main | 字符串；无返回 | preload 校验类型；main 要求非空且最多 50 code points |
 | `hideBubble()` | `bubble:hide` → main | 无参数；无返回 | main 校验发送者并清理计时器 |
 | `reportNotification(id, status)` | `codex:notification-result` → main | `id` 最多 64 字符；`status` 为 `accepted/busy/empty` | preload 白名单校验；协调器据此确认当前通知 |
@@ -212,11 +248,11 @@ pointerdown / move / up / cancel
 | `drag:end` | 人物 → main | 无 | 结束会话；实际移动时立即保存 |
 | `bubble:show` | 人物 → main | 文本 | 显示气泡并重置 6000ms 计时器 |
 | `bubble:hide` | 人物 → main | 无 | 清理计时器并隐藏气泡 |
-| `codex:rate-limit` | 人物 ⇄ main | `Promise<string>` | 查询或复用额度请求，显示并返回结果 |
+| `balance:read` | 人物 ⇄ main | `Promise<string>` | 按 `balanceSource` 查询或复用 Codex/DeepSeek 余额请求，显示并返回结果 |
 | `codex:notification-result` | 人物 → main | `{ id, status }` | 确认协调器当前通知并继续派发 |
 | `character:idle` | 人物 → main | 无 | 通知协调器人物处于待机；当前实现不依赖它排队 |
 | `character:ready` | preload → main | 无 | 首次显示人物并发送设置 |
-| `codex:notification` | main → 人物 | `{ id, text }` | 派发 Codex 生命周期短通知 |
+| `codex:notification` | main → 人物 | `{ id, text }` | 历史通道名保持兼容；实际派发带来源名称的 Codex/DeepSeek 生命周期短通知 |
 | `character:appearance` | main → 人物 | `{ mirrored }` | 同步全部人物媒体镜像 |
 | `character:interaction-locked` | main → 人物 | 布尔值 | 同步鼠标穿透；必要时取消当前手势 |
 | `message:local` | main → 人物 | 文本 | 模拟消息，renderer 决定是否播放人物消息动作 |
@@ -227,6 +263,7 @@ pointerdown / move / up / cancel
 | 字段 | 必需 | 约束 | 用途 |
 | --- | --- | --- | --- |
 | `version` | 是 | 当前协议版本 | 拒绝未知协议 |
+| `source` | 否 | `codex/deepseek`；缺失为 `codex` | 兼容现有 Hook，并把调度键命名空间化为 `source + sessionId` |
 | `sessionId` | 是 | 非空、受限长度字符串 | 识别最近活动任务并切换双槽 |
 | `turnId` | 是 | 非空、受限长度字符串 | 标识当前 turn |
 | `event` | 是 | `UserPromptSubmit/PreToolUse/PermissionRequest/Stop` | 映射桌宠短消息 |
@@ -235,7 +272,9 @@ pointerdown / move / up / cancel
 | `finalText` | 否 | 当前转发器最多 256 字符；解析上限 2048 | `Stop` 的规范化最后回复摘要，最终仍限 50 code points |
 | `sentAt` | 是 | 合法时间值 | 事件时间信息 |
 
-每条 Pipe 消息是单行 UTF-8 JSON，总长度不超过 8192 bytes。未知字段、未知事件、坏 JSON、空 ID、超长字段和无换行超长残留都会被丢弃；消息内容不会被当作命令执行。
+每条通知 Pipe 消息是单行 UTF-8 JSON，总长度不超过 8192 bytes。未知字段、未知来源、未知事件、坏 JSON、空 ID、超长字段和无换行超长残留都会被丢弃；消息内容不会被当作命令执行。协调器以 `source + sessionId` 识别最近活动任务，两种来源共用双槽、critical 优先和 3 秒普通通知节流。
+
+DeepSeek 余额使用独立的 `\\.\pipe\remiel-desktop-pet-deepseek-v1`。桌宠只发送 `{ "version": 1, "type": "balance/read" }`；插件只返回 `{ version: 1, ok: true, text }` 或 `{ version: 1, ok: false, code }`。请求/响应均为有界单行 JSON，绝不含 Key、HTTP 原文或完整响应；固定错误码包括 `not_configured/request_failed/invalid_response/unsupported_version`。
 
 ### Codex App Server JSONL
 
@@ -262,19 +301,20 @@ pointerdown / move / up / cancel
 - 消息先合并空白，再限制为最多 50 个 Unicode code points；超长文本以省略号结束。
 - 每次显示消息、额度或失败提示都会重置一个 6000ms 计时器；到期、手动隐藏和退出都会清理计时器并隐藏窗口。
 
-### 单击额度查询
+### 单击余额查询
 
 ```text
 renderer 单击
-  → preload: requestCodexRateLimit()
-  → main 复用当前进行中请求，或临时启动 codex.exe app-server
-  → initialize → initialized → account/rateLimits/read
-  → 只读取 rateLimits.primary.usedPercent 与 resetsAt
+  → preload: requestBalance()
+  → main 按 position.json 的 balanceSource 分流并复用当前请求
+  → Codex：临时 app-server → account/rateLimits/read
+  → DeepSeek：余额 Pipe → Harness 插件临时 resolve(DEEPSEEK_API_KEY)
+             → GET https://api.deepseek.com/user/balance
   → 本地时区格式化并显示 6 秒
-  → 成功、失败、超时或退出时终止子进程
+  → 成功、失败、超时或退出时清理各自资源
 ```
 
-剩余比例按 `100 - usedPercent` 计算并限制到 0–100，文案为 `Codex 剩余 76%，8月30日 02:13 重置`。协议行解析会忽略无关通知；坏响应、进程错误和 8 秒超时统一显示 `暂时无法获取 Codex 剩余额度`。该流程不开放端口，不读取 Codex 对话、认证文件或模型内容，也不依赖 Hook 是否启用。
+Codex 剩余比例按 `100 - usedPercent` 计算并限制到 0–100，文案为 `Codex 剩余 76%，8月30日 02:13 重置`；该流程仍不读取对话、认证文件或模型内容。DeepSeek 成功文案保留全部返回币种，例如 `DeepSeek 余额：CNY 110.00，USD 15.00`；`is_available=false` 显示余额不可用，未启动 Harness、未配置 Key、请求失败、无效响应和不支持版本分别收敛为短文案。`DEEPSEEK_API_KEY` 只在插件单次请求局部变量和 Authorization header 中短暂存在，不进入桌宠进程、Pipe、日志或持久化。
 
 ## 8. Codex 接入：安装阶段
 
@@ -306,6 +346,23 @@ Codex 通知 → 启用/修复
 - 状态标记：`蕾米埃尔桌宠 Codex 通知`
 
 停用时只移除带上述标记的 handler 和蕾米埃尔转发脚本，保留其他用户 Hook；修改已有配置前同样备份。
+
+### DeepSeek Harness 安装与运行
+
+DeepSeek 不进入首次运行向导，只从托盘的 `DeepSeek Harness` 子菜单启用、修复或停用。桌宠先把随应用分发、无第三方运行时依赖的 `remiel-dsh-bridge` Bundle 复制到 `userData/deepseek-harness/remiel-dsh-bridge`，再固定调用：
+
+```text
+npx --yes @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web add <暂存目录>
+npx --yes @deepseek-ai/dsh@0.1.1-rc.2 plugin --profile web remove remiel-dsh-bridge
+```
+
+只由官方 CLI 维护 `$DSH_HOME/profiles/web/package.json`，不手写 profile，不删除其他 Bundle，也不安装 Harness 本体。菜单状态区分未启用、已写入、需修复和 profile 无效；成功只提示“配置已写入，请完全重启 Harness”，不得把磁盘配置误报为当前 Harness 已加载。
+
+Bundle 固定支持 `0.1.1-rc.2`，运行时从 CLI 入口附近的官方 `@deepseek-ai/dsh/package.json` 检测版本。其他版本不监听会话事件，只保留余额 Pipe 返回 `unsupported_version`，并输出不含任务或凭据的固定警告。
+
+插件只读观察 `session/event`：`source.kind === "user"` 的 `user/message` 映射任务开始，`tool/call` 映射命令程序/子命令或安全工具类别，`approval/asked` 映射等待确认，`assistant/message` 只缓存文本开头，`turn/end` 映射完成、失败、取消、阻止、输出上限或中断。完整提示词、原始 arguments、完整路径、工具输出、审批 reason 和认证内容都不进入通知 Pipe。Pipe/HTTP/重复进程/销毁错误全部隔离；第二个 Harness 进程占不到余额 Pipe 时，通知监听仍保留。
+
+官方依据：<https://deepseek-harness.github.io/deepseek-harness/en/develop/basic/>、<https://deepseek-harness.github.io/deepseek-harness/en/develop/basic/publish>、<https://deepseek-harness.github.io/deepseek-harness/en/guide/providers>、<https://api-docs.deepseek.com/zh-cn/api/get-user-balance/>。
 
 ## 9. Codex 接入：运行阶段
 
@@ -352,6 +409,8 @@ PowerShell 只保留规范化的任务开头、安全命令程序/子命令、�
 ## 10. `/hooks` 为什么看不到蕾米埃尔图标
 
 `/hooks` 是 Codex CLI 的 Hook 管理界面，不是桌面宠物的聊天入口，也不是插件商店。
+
+2026-08-24 纯净重装后的当前状态是启动 CLI 即提示 `4 hooks are new or changed`。进入事件详情应看到 `New hook - review required`；完成审核后，本节下面的 `[x]` 和 `Trust: Trusted` 才是目标状态。
 
 第一层只列事件名称、Installed 和 Active 数量，因此不会出现蕾米埃尔图标或名字。正确检查方式：
 
@@ -415,7 +474,10 @@ PowerShell 只保留规范化的任务开头、安全命令程序/子命令、�
   "scale": 1,
   "bubbleScale": 1,
   "mirrored": false,
-  "bubbleSide": "right"
+  "bubbleSide": "right",
+  "balanceSource": "codex",
+  "monitorCodex": true,
+  "monitorDeepSeek": true
 }
 ```
 
@@ -430,6 +492,9 @@ PowerShell 只保留规范化的任务开头、安全命令程序/子命令、�
 | `bubbleScale` | `0.5/0.75/1/1.25/1.5` | `1`，兼容 0.2.0 以前配置 | 气泡独立缩放 |
 | `mirrored` | 布尔值 | `false` | 全部人物媒体镜像 |
 | `bubbleSide` | `left/right` | `right` | 气泡优先侧；实际落点仍可自动换边 |
+| `balanceSource` | `codex/deepseek` | `codex` | 人物单击余额来源；人物右键单选后立即原子保存 |
+| `monitorCodex` | 布尔值 | `true` | 是否接受 Codex 通知；关闭时丢弃 Codex 当前与等待项 |
+| `monitorDeepSeek` | 布尔值 | `true` | 是否接受 DeepSeek 通知；关闭时丢弃 DeepSeek 当前与等待项 |
 
 项目目录之外的接入文件：
 
@@ -438,6 +503,8 @@ PowerShell 只保留规范化的任务开头、安全命令程序/子命令、�
 | `%CODEX_HOME%\hooks.json`；未设置时通常为 `%USERPROFILE%\.codex\hooks.json` | 用户级 Codex Hook 配置；可能还包含其他用户 Hook |
 | `%APPDATA%\蕾米埃尔\codex-hook-forwarder.ps1` | 自动生成的隐藏转发器 |
 | `%APPDATA%\蕾米埃尔\position.json` | 桌宠位置和视觉偏好，也是首次运行判断依据 |
+| `%APPDATA%\蕾米埃尔\deepseek-harness\remiel-dsh-bridge\` | 安装前暂存的内置 Harness Bundle；不含 Key |
+| `%DSH_HOME%\profiles\web\package.json`；未设置时通常为 `%USERPROFILE%\.dsh\profiles\web\package.json` | 官方 `dsh plugin` 维护的 web profile；可能包含其他 Bundle，必须保留 |
 | `%USERPROFILE%\Desktop\蕾米埃尔.lnk` | NSIS 安装版或当前正式验证版本的启动快捷方式 |
 | `%LOCALAPPDATA%\Programs\remiel-desktop-pet\` | 当前用户 NSIS 安装目录，包含应用与卸载程序 |
 
@@ -463,13 +530,15 @@ PowerShell 只保留规范化的任务开头、安全命令程序/子命令、�
 
 | 文件 | 职责 |
 | --- | --- |
-| `src/main.js` | Electron 主进程总装配：单实例、两个窗口、托盘和人物菜单、IPC、拖动、气泡计时、额度请求编排、屏幕约束、偏好保存、Hook 状态和 Named Pipe 生命周期 |
+| `src/main.js` | Electron 主进程总装配：单实例、两个窗口、托盘和人物菜单、IPC、拖动、气泡计时、双来源余额/消息开关、屏幕约束、偏好保存及两种接入状态 |
 | `src/first-run.js` | 首次运行协调：只以有效配置是否存在判断，确保选择、启用失败和结果提示后都保存位置；通过注入回调保持可测 |
 | `src/codex-rate-limit.js` | 临时 App Server JSONL 客户端：初始化、额度读取、校验与本地时区格式化，以及成功/失败/超时/退出清理 |
 | `src/codex-hook.js` | Hook 配置边界：解析校验、幂等安装、安全卸载、备份、原子写入、带 BOM 的隐藏 PowerShell 安全摘要转发器和状态检查 |
-| `src/codex-notifications.js` | Pipe 输入边界：严格消息解析、可选 `detailText` 与旧消息回退、最近会话切换、双槽队列、3 秒节流、不依赖人物 idle 的派发和 Pipe 分帧服务器 |
-| `src/position-store.js` | `position.json` 读取、人物与气泡独立五档缩放白名单、旧配置默认值、串行原子保存 |
-| `src/preload.js` | 人物 renderer 的唯一窄 IPC 门面，包含 `requestCodexRateLimit(): Promise<string>`；不暴露 Node、文件、认证、Hook 配置或进程启动能力 |
+| `src/codex-notifications.js` | 通知 Pipe 输入边界：严格解析可选 `source`、来源开关过滤/清理、旧消息默认 Codex、`source + sessionId` 最近任务、双槽、3 秒节流和分帧服务器 |
+| `src/deepseek-harness.js` | 桌宠侧 DeepSeek 边界：Bundle 暂存、固定 rc.2 npx 参数、web profile 状态检查、CLI 生命周期和有界余额 Pipe 客户端 |
+| `src/integrations/deepseek-harness/*` | 可安装 ESM Bundle：只读 `session/event` 安全映射、版本门禁、余额 Pipe、临时凭据解析和官方余额 HTTP 请求；零第三方运行时依赖 |
+| `src/position-store.js` | `position.json` 读取、视觉偏好、余额来源和两个监控布尔开关的白名单、旧配置默认值、串行原子保存 |
+| `src/preload.js` | 人物 renderer 的唯一窄 IPC 门面，包含 `requestBalance(): Promise<string>`；不暴露 Node、文件、认证、Hook 配置或进程启动能力 |
 | `src/bubble-preload.js` | 气泡 renderer 的只读更新 IPC，只允许合法文本和左右落点 |
 | `src/domain/pet-machine.js` | 与 Electron 无关的纯状态机：待机/点击/消息/拿起/保持/放下、按下时资格锁、可中断物理拖动和 50 code point 文本规范化 |
 | `src/domain/window-geometry.js` | 与 Electron 无关的纯几何：缩放尺寸、脚底中心锚定、拖动、多屏恢复、工作区限制，以及结合镜像/头部侧的气泡内移和换边 |
@@ -488,10 +557,11 @@ PowerShell 只保留规范化的任务开头、安全命令程序/子命令、�
 | `test/pet-machine.test.js` | 待机拖动完整链路、非待机资格锁、提前结束、松手/取消、锁定消息、单击阈值和文本规范化 |
 | `test/media-controller.test.js` | 视频首帧与静态保持帧前保留旧画面、过期切换无效和单击 2 倍速 |
 | `test/window-geometry.test.js` | 镜像与信息方向四组合、头部内移、自动换边、五档缩放、脚底锚定、多屏恢复和拖动坐标 |
-| `test/position-store.test.js` | 气泡五档缩放、旧配置兼容、损坏回退、原子保存和连续写入 |
+| `test/position-store.test.js` | 气泡五档缩放、余额来源与双监控开关的默认/持久化/损坏回退、原子保存和连续写入 |
 | `test/codex-rate-limit.test.js` | App Server JSONL 初始化、额度解析和格式化、无关消息、坏响应、超时与进程清理 |
 | `test/codex-hook.test.js` | Hook 幂等安装、备份、保留其他 Hook、非法 JSON、快速退出，以及真实 PowerShell 对任务预览、安全命令、basename、审批和敏感字段的 Pipe 边界 |
-| `test/codex-notifications.test.js` | `detailText`/旧消息兼容、Pipe 分包、多消息、坏/超长载荷、50 字限制、锁定时派发、回执续发、双槽、节流和会话切换 |
+| `test/codex-notifications.test.js` | `source`/旧消息兼容、来源过滤和即时清理、Pipe 分包、50 字限制、回执续发、双槽、节流和双来源最近任务切换 |
+| `test/deepseek-harness.test.js` | Bundle 暂存、固定 CLI、profile 状态、事件安全摘要、敏感字段隔离、余额格式/错误/超时、并发 Pipe、版本门禁和清理 |
 | `test/first-run.test.js` | 临时 userData/CODEX_HOME 下的启用、跳过、失败、位置保存与已有配置不重复向导 |
 | `test/renderer-contract.test.js` | 六种运行媒体与保持图片镜像、托盘/人物菜单、6000ms 气泡计时，以及额度窄 IPC 不泄露能力 |
 
@@ -512,7 +582,7 @@ PowerShell 只保留规范化的任务开头、安全命令程序/子命令、�
 | `assets/processed/drag-release.webm` | 待机起始拖动正常松手或取消后的放下素材 |
 | `assets/processed/app.ico` | 托盘和 EXE 图标 |
 | `scripts/process-assets.ps1` | 校验原素材哈希后调用 FFmpeg 重新生成全部运行素材，再调用验证脚本 |
-| `scripts/verify-assets.ps1` | 使用哈希与 ffprobe 验证素材集合、编码、尺寸、帧率、透明通道，并按需重建临时 `artifacts/` 证据 |
+| `scripts/verify-assets.ps1` | 使用哈希与 ffprobe 验证素材集合、编码、尺寸、帧率、透明通道，并按需重建临时 `artifacts/` 证据；保留 UTF-8 BOM 以兼容 Windows PowerShell 5.1 |
 
 ### 生成目录和发布物
 
@@ -520,8 +590,8 @@ PowerShell 只保留规范化的任务开头、安全命令程序/子命令、�
 | --- | --- |
 | `node_modules/` | npm 安装的第三方开发依赖；不进入 Agent 阅读范围，损坏时用锁文件重装 |
 | `.codegraph/` | 生成的结构索引；用于导航，不手工编辑，不视为产品源码 |
-| `dist/蕾米埃尔-Setup-0.4.0-beta.1.exe` | 当前本地 NSIS 单击安装器；当前用户安装、桌面/开始菜单快捷方式、卸载入口、安装后启动 |
-| `dist/蕾米埃尔-Portable-0.4.0-beta.1.exe` | 当前本地免安装单文件版 |
+| `dist/蕾米埃尔-Setup-0.4.0-beta.2.exe` | 当前本地 NSIS 单击安装器；当前用户安装、桌面/开始菜单快捷方式、卸载入口、安装后启动 |
+| `dist/蕾米埃尔-Portable-0.4.0-beta.2.exe` | 当前本地免安装单文件版 |
 | `artifacts/` | 可再生成的临时素材验证输出；当前已清理，不是事实源，不提交 Git |
 | `dist/win-unpacked/`、`dist/builder-debug.yml`、`dist/*.blockmap`、`dist/latest.yml` | electron-builder 可再生成中间物；当前已清理，不提交 Git |
 
@@ -542,10 +612,11 @@ electron-builder 本地仍生成计划中的中文文件名。GitHub 会移除 R
 | 配置字段 | `src/position-store.js` | 白名单、旧配置默认值、同目录原子替换和连续写入串行化 | `position-store.test.js` |
 | 菜单、托盘或窗口生命周期 | `src/main.js` | 托盘保留解锁兜底；人物菜单即时生成；窗口保持安全选项 | `renderer-contract.test.js` |
 | 气泡显示或计时 | `src/main.js`、`src/bubble/*` | 文本只写 `textContent`；每次显示重置 6000ms；隐藏和退出清理计时器 | `renderer-contract.test.js`、`window-geometry.test.js` |
-| 额度查询 | `src/codex-rate-limit.js` | preload 保持唯一窄接口；不创建 Thread/Turn；所有路径终止子进程 | `codex-rate-limit.test.js`、`renderer-contract.test.js` |
+| 余额查询 | `src/codex-rate-limit.js`、`src/deepseek-harness.js` | preload 保持单一 `balance:read`；Codex 不创建 Thread/Turn；DeepSeek Key 不越过 Harness Pipe | `codex-rate-limit.test.js`、`deepseek-harness.test.js`、`renderer-contract.test.js` |
 | 首次运行向导 | `src/first-run.js`、`src/main.js` | 只以有效 `position.json` 判断；不新增状态；三种结果都保存；信任仍由用户审核 | `first-run.test.js`、`renderer-contract.test.js` |
 | Codex Hook 安装/摘要 | `src/codex-hook.js` | 非法 JSON 不覆盖；保留其他 handler；修改前备份；完整敏感输入不得进入 Pipe | `codex-hook.test.js` |
-| Codex 通知协议或调度 | `src/codex-notifications.js` | Bridge v1 可选 `detailText`、旧消息兼容、8192 bytes、双槽、3 秒节流、最近会话 | `codex-notifications.test.js`、`codex-hook.test.js` |
+| Codex/DeepSeek 通知协议、开关或调度 | `src/codex-notifications.js`、`src/main.js` | Bridge v1 来源兼容、人物右键双开关、8192 bytes、双槽、3 秒节流、最近来源+会话 | `codex-notifications.test.js`、`codex-hook.test.js`、`renderer-contract.test.js` |
+| DeepSeek Bundle 或安装 | `src/deepseek-harness.js`、`src/integrations/deepseek-harness/*` | 固定 rc.2/web profile；官方 CLI；只读事件；不泄露 Key/参数/路径/输出；错误不影响 Harness 任务 | `deepseek-harness.test.js`、`codex-notifications.test.js` |
 | 素材处理 | `scripts/process-assets.ps1` | 只有用户明确要求才运行；不得删除或重编码原素材；先校验固定哈希 | `scripts/verify-assets.ps1` |
 | 正式发布 | `package.json`、`.github/workflows/release.yml` | 版本与锁文件同步；Action 固定 SHA；最小 `contents: write`；Beta 标签必须 Pre-release | 完整 `npm test`、素材验证、ASAR、安装/Portable 启动、Release 回下载 SHA-256 |
 
@@ -593,8 +664,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\process-assets.ps1
 
 | 文件 | SHA-256 |
 | --- | --- |
-| `dist/蕾米埃尔-Setup-0.4.0-beta.1.exe`（本地构建） | `335492D2BD45926195C3EF82453FD357AABB6B8487AE874BFE2B48DCEABEB5DD` |
-| `dist/蕾米埃尔-Portable-0.4.0-beta.1.exe`（本地构建） | `6440013348C39B7660B76388AD911965B06DD99650AAF02B4DC0AF3AD4E05FF1` |
+| `dist/蕾米埃尔-Setup-0.4.0-beta.2.exe`（本地构建） | `34245D7705894325274D2378303448964EBA26144599ABDD25F6E8317C478A93` |
+| `dist/蕾米埃尔-Portable-0.4.0-beta.2.exe`（本地构建） | `810F50747BA697D75F79E58DB7F8E0899C707F432A82E84014B70753B92BAD89` |
 | `Remielle-Setup-0.4.0-beta.1.exe`（GitHub Release） | `CCE31469EB15EEE6A64D4C4EF28268CADE9ACF85D4427BE0F1EEB1FD2DB15BD7` |
 | `Remielle-Portable-0.4.0-beta.1.exe`（GitHub Release） | `B3F29C648AD7A2AF8625C48A6949EDAF055098BC3725929DCF84EFBACCD8FF82` |
 
@@ -611,9 +682,11 @@ GitHub Actions 构建不保证与本机 Electron-builder 输出逐字节一致�
   + 单击时临时只读额度的 App Server 客户端
   + 用户主动安装的 Codex Hook
   + 隐藏 PowerShell 安全摘要清洗器
-  + 本机 Named Pipe
-  + 有界通知调度
+  + 固定 rc.2/web profile 的 DeepSeek Harness ESM Bundle
+  + Harness 内临时凭据解析与官方余额请求
+  + 双本机 Named Pipe
+  + 双来源有界通知调度
   + GitHub Actions 双目标预发布
 ```
 
-额度查询已经通过真实 `codex.exe app-server` 成功路径验证，但它与生命周期 Hook 相互独立。生命周期通知下一步仍是让用户完全重启 Codex 桌面应用并做真实本地任务验收；只有该验收仍失败时，才根据第 11 节逐层定位。保留现有隐私边界，不用 transcript 轮询，也不用 App Server 创建 Thread 来冒充桌面当前任务。
+Codex 额度已经通过真实 `codex.exe app-server` 成功路径验证；Codex lifecycle 通知下一步仍是 `/hooks` 完成四条审核信任、完全退出重开 Codex Desktop，再用真实新本地任务验收。DeepSeek 默认 `web` profile 已安装 Bundle，并通过真实 `0.1.1-rc.2` 临时 Harness、余额 Pipe、真实凭据解析和官方余额接口成功路径验证；安装前已运行的 Harness 仍需完全退出重开，真实任务 lifecycle 通知尚未端到端验证，不得扩大宣称。本轮已运行 `npm test` 与 `npm run build`，生成并冒烟启动本地 `0.4.0-beta.2` Setup/Portable；旧 `0.4.0-beta.1` 与构建中间物已移入回收站，`dist/` 只保留两个新 EXE。未发布新的 GitHub Release，也没有修改现有 Codex Hook 定义或 PowerShell 转发器。保留现有隐私边界，不用 transcript 轮询，也不用任何接入创建 Thread/Turn 来冒充当前任务。

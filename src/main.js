@@ -24,9 +24,17 @@ const {
 } = require('./codex-hook.js');
 const {
   createNotificationCoordinator,
-  createPipeServer
+  createPipeServer,
+  notificationBridgeRequired
 } = require('./codex-notifications.js');
 const { queryCodexRateLimit } = require('./codex-rate-limit.js');
+const {
+  inspectDeepSeekPlugin,
+  queryDeepSeekBalance,
+  resolveDshHome,
+  runDshPluginCommand,
+  stageDeepSeekBundle
+} = require('./deepseek-harness.js');
 const { runFirstRun } = require('./first-run.js');
 
 const CHARACTER_READY_CHANNEL = 'character:ready';
@@ -76,6 +84,11 @@ let pipeServer = null;
 let notificationCoordinator = null;
 let rateLimitRequest = null;
 let rateLimitAbortController = null;
+let deepSeekBalanceRequest = null;
+let deepSeekBalanceAbortController = null;
+let deepSeekCommandRequest = null;
+let deepSeekState = 'disabled';
+let dshHome = null;
 
 function currentCharacterSize() {
   return characterSizeForScale(CHARACTER_SIZE, visualPreferences.scale);
@@ -189,11 +202,11 @@ function registerIpc() {
     hideBubble();
   });
 
-  ipcMain.handle('codex:rate-limit', (event) => {
+  ipcMain.handle('balance:read', (event) => {
     if (event.sender !== characterWindow?.webContents) {
-      throw new Error('invalid rate limit requester');
+      throw new Error('invalid balance requester');
     }
-    return requestCodexRateLimit();
+    return requestBalance();
   });
 
   ipcMain.on('codex:notification-result', (event, result) => {
@@ -387,6 +400,43 @@ async function requestCodexRateLimit() {
   return text;
 }
 
+async function requestDeepSeekBalance() {
+  if (!deepSeekBalanceRequest) {
+    deepSeekBalanceAbortController = new AbortController();
+    const pending = queryDeepSeekBalance({ signal: deepSeekBalanceAbortController.signal });
+    const tracked = pending.finally(() => {
+      if (deepSeekBalanceRequest === tracked) {
+        deepSeekBalanceRequest = null;
+        deepSeekBalanceAbortController = null;
+      }
+    });
+    deepSeekBalanceRequest = tracked;
+  }
+
+  let text;
+  try {
+    const result = await deepSeekBalanceRequest;
+    text = result.ok ? result.text : {
+      not_configured: '请先在 DeepSeek Harness 配置 API Key',
+      request_failed: '暂时无法获取 DeepSeek 余额',
+      invalid_response: 'DeepSeek 余额响应无效',
+      unsupported_version: '当前 DeepSeek Harness 版本暂不支持'
+    }[result.code] || '暂时无法获取 DeepSeek 余额';
+  } catch (error) {
+    text = error.code === 'harness_not_running'
+      ? '请先启动 DeepSeek Harness'
+      : '暂时无法获取 DeepSeek 余额';
+  }
+  if (!quitting) showBubbleText(text);
+  return text;
+}
+
+function requestBalance() {
+  return visualPreferences.balanceSource === 'deepseek'
+    ? requestDeepSeekBalance()
+    : requestCodexRateLimit();
+}
+
 function toggleVisibility() {
   if (!characterReady) {
     windowsHiddenByTray = !windowsHiddenByTray;
@@ -483,6 +533,27 @@ function toggleBubbleSide() {
   persistCurrentPosition().catch(console.error);
 }
 
+function setBalanceSource(source) {
+  if (source !== 'codex' && source !== 'deepseek') return;
+  visualPreferences.balanceSource = source;
+  persistCurrentPosition().catch(console.error);
+}
+
+function setMessageMonitoring(source, enabled) {
+  if ((source !== 'codex' && source !== 'deepseek') || typeof enabled !== 'boolean') return;
+  const key = source === 'codex' ? 'monitorCodex' : 'monitorDeepSeek';
+  visualPreferences[key] = enabled;
+  if (!enabled) notificationCoordinator?.discardSource(source);
+  persistCurrentPosition().catch(console.error);
+}
+
+function monitoringLabel() {
+  if (visualPreferences.monitorCodex && visualPreferences.monitorDeepSeek) return 'Codex + DeepSeek';
+  if (visualPreferences.monitorCodex) return '仅 Codex';
+  if (visualPreferences.monitorDeepSeek) return '仅 DeepSeek';
+  return '已关闭';
+}
+
 function changeScale(direction) {
   if (!characterWindow || characterWindow.isDestroyed()) return;
   const currentIndex = VALID_SCALES.indexOf(visualPreferences.scale);
@@ -526,6 +597,15 @@ function hookStatusLabel() {
   }[hookState] || '当前状态：未知';
 }
 
+function deepSeekStatusLabel() {
+  return {
+    disabled: '配置状态：未启用',
+    enabled: '配置状态：已写入；请完全重启 Harness',
+    needsRepair: '配置状态：需要修复',
+    invalid: '配置状态：web profile 无效'
+  }[deepSeekState] || '配置状态：未知';
+}
+
 function buildPetTemplate() {
   const scaleIndex = VALID_SCALES.indexOf(visualPreferences.scale);
   const bubbleScaleIndex = VALID_SCALES.indexOf(visualPreferences.bubbleScale);
@@ -562,6 +642,40 @@ function buildPetTemplate() {
       enabled: bubbleScaleIndex > 0,
       click: () => changeBubbleScale(-1)
     },
+    {
+      label: `余额来源：${visualPreferences.balanceSource === 'deepseek' ? 'DeepSeek' : 'Codex'}`,
+      submenu: [
+        {
+          label: 'Codex',
+          type: 'radio',
+          checked: visualPreferences.balanceSource === 'codex',
+          click: () => setBalanceSource('codex')
+        },
+        {
+          label: 'DeepSeek',
+          type: 'radio',
+          checked: visualPreferences.balanceSource === 'deepseek',
+          click: () => setBalanceSource('deepseek')
+        }
+      ]
+    },
+    {
+      label: `消息监控：${monitoringLabel()}`,
+      submenu: [
+        {
+          label: 'Codex 消息',
+          type: 'checkbox',
+          checked: visualPreferences.monitorCodex,
+          click: (item) => setMessageMonitoring('codex', item.checked)
+        },
+        {
+          label: 'DeepSeek 消息',
+          type: 'checkbox',
+          checked: visualPreferences.monitorDeepSeek,
+          click: (item) => setMessageMonitoring('deepseek', item.checked)
+        }
+      ]
+    },
     { type: 'separator' },
     { label: '模拟收到消息', click: () => sendLocalMessage() },
     { label: '回到屏幕内', click: resetPosition }
@@ -590,6 +704,23 @@ function buildTrayTemplate() {
         { label: hookStatusLabel(), enabled: false }
       ]
     },
+    {
+      label: 'DeepSeek Harness',
+      submenu: [
+        {
+          label: '启用/修复',
+          enabled: !deepSeekCommandRequest,
+          click: () => enableDeepSeekHarness().catch(console.error)
+        },
+        {
+          label: '停用',
+          enabled: !deepSeekCommandRequest && deepSeekState !== 'disabled',
+          click: () => disableDeepSeekHarness().catch(console.error)
+        },
+        { type: 'separator' },
+        { label: deepSeekStatusLabel(), enabled: false }
+      ]
+    },
     { type: 'separator' },
     { label: '退出', click: quitApplication }
   ];
@@ -607,6 +738,11 @@ async function startPipeBridge() {
   if (!notificationCoordinator) {
     notificationCoordinator = createNotificationCoordinator({
       initiallyIdle: characterReady,
+      sourceEnabled(source) {
+        return source === 'deepseek'
+          ? visualPreferences.monitorDeepSeek
+          : visualPreferences.monitorCodex;
+      },
       send(notification) {
         if (characterWindow && !characterWindow.isDestroyed()) {
           characterWindow.webContents.send('codex:notification', notification);
@@ -636,6 +772,12 @@ async function stopPipeBridge() {
   await new Promise((resolve) => server.close(resolve));
 }
 
+function syncPipeBridge() {
+  return notificationBridgeRequired(hookState, deepSeekState)
+    ? startPipeBridge()
+    : stopPipeBridge();
+}
+
 async function enableCodexNotifications() {
   try {
     await installCodexHooks({ codexHome, userData, pipeName: PIPE_NAME });
@@ -654,8 +796,8 @@ async function enableCodexNotifications() {
 async function disableCodexNotifications() {
   try {
     await uninstallCodexHooks({ codexHome, userData });
-    await stopPipeBridge();
     hookState = 'disabled';
+    await syncPipeBridge();
     refreshTrayMenu();
     sendLocalMessage('Codex 通知已停用，其他 Hook 保持不变。');
   } catch (error) {
@@ -669,9 +811,50 @@ async function disableCodexNotifications() {
 async function refreshHookState() {
   const status = await inspectCodexHooks({ codexHome, userData, pipeName: PIPE_NAME });
   hookState = status.state;
-  if (hookState === 'enabled' || hookState === 'needsRepair') await startPipeBridge();
+  await syncPipeBridge();
   refreshTrayMenu();
   return status;
+}
+
+async function refreshDeepSeekState() {
+  deepSeekState = (await inspectDeepSeekPlugin({ dshHome })).state;
+  await syncPipeBridge();
+  refreshTrayMenu();
+  return deepSeekState;
+}
+
+async function changeDeepSeekPlugin(action) {
+  if (deepSeekCommandRequest) return deepSeekCommandRequest;
+  const pending = (async () => {
+    try {
+      const bundlePath = action === 'add' ? await stageDeepSeekBundle({ userData }) : undefined;
+      await runDshPluginCommand({ action, bundlePath, dshHome });
+      await refreshDeepSeekState();
+      sendLocalMessage(action === 'add'
+        ? 'DeepSeek 配置已写入，请完全重启 Harness。'
+        : 'DeepSeek 接入已停用，请完全重启 Harness。');
+    } catch (error) {
+      deepSeekState = 'needsRepair';
+      await syncPipeBridge();
+      refreshTrayMenu();
+      sendLocalMessage('DeepSeek Harness 配置失败，请稍后重试。');
+      throw error;
+    }
+  })();
+  deepSeekCommandRequest = pending.finally(() => {
+    deepSeekCommandRequest = null;
+    refreshTrayMenu();
+  });
+  refreshTrayMenu();
+  return deepSeekCommandRequest;
+}
+
+function enableDeepSeekHarness() {
+  return changeDeepSeekPlugin('add');
+}
+
+function disableDeepSeekHarness() {
+  return changeDeepSeekPlugin('remove');
 }
 
 async function showFirstRunOnboarding(savedPosition) {
@@ -711,6 +894,8 @@ function quitApplication() {
   quitting = true;
   rateLimitAbortController?.abort();
   rateLimitAbortController = null;
+  deepSeekBalanceAbortController?.abort();
+  deepSeekBalanceAbortController = null;
   hideBubble();
   notificationCoordinator?.dispose();
   notificationCoordinator = null;
@@ -726,6 +911,7 @@ async function bootstrap() {
   await app.whenReady();
   userData = app.getPath('userData');
   codexHome = resolveCodexHome();
+  dshHome = resolveDshHome();
   positionFile = path.join(userData, 'position.json');
   const savedPosition = await loadPosition(positionFile);
   visualPreferences = normalizePreferences(savedPosition);
@@ -739,6 +925,11 @@ async function bootstrap() {
   tray = createTray();
   await refreshHookState().catch((error) => {
     hookState = 'needsRepair';
+    refreshTrayMenu();
+    console.error(error);
+  });
+  await refreshDeepSeekState().catch((error) => {
+    deepSeekState = 'needsRepair';
     refreshTrayMenu();
     console.error(error);
   });

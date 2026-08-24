@@ -1,0 +1,4 @@
+- insert:
+    - id: remiel-dsh-bridge
+      name: remiel-dsh-bridge
+      inject: [credentials]
