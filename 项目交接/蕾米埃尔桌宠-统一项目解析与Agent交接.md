@@ -3,15 +3,15 @@
 | 项目项 | 当前值 |
 | --- | --- |
 | 最后更新 | 2026-08-25 |
-| 当前版本 | 0.4.0-beta.2 |
+| 当前版本 | 0.4.0-beta.3 |
 | 项目目录 | `<仓库根目录>` |
 | 公开仓库 | `https://github.com/ch998244353/Remielle`（`main`） |
 | 许可证 | MIT；代码与全部角色素材统一适用 |
 | 技术栈 | Electron 43、原生 JavaScript、HTML/CSS、Node.js 内置模块 |
 | 运行入口 | `package.json` → `src/main.js` |
-| 当前本地构建物 | `dist/蕾米埃尔-Setup-0.4.0-beta.2.exe`、`dist/蕾米埃尔-Portable-0.4.0-beta.2.exe` |
-| 当前公开发布 | `https://github.com/ch998244353/Remielle/releases/tag/v0.4.0-beta.1`，Pre-release |
-| 自动测试 | 49/49 PASS（2026-08-24 右键双源开关后重新验证） |
+| 当前本地构建物 | `dist/蕾米埃尔-Setup-0.4.0-beta.3.exe`、`dist/蕾米埃尔-Portable-0.4.0-beta.3.exe` |
+| 当前公开发布 | `https://github.com/ch998244353/Remielle/releases/tag/v0.4.0-beta.3`，Pre-release |
+| 自动测试 | 50/50 PASS（2026-08-25 Codex Appx 路径回归后重新验证） |
 | 文档定位 | 唯一架构、接口、验证和交接事实源 |
 
 下一位 Agent 不需要寻找旧设计书、旧验收截图或先前对话；先读本文，再用 CodeGraph 定位任务涉及的符号，最后只读取被点名的源码和测试。
@@ -20,12 +20,12 @@
 
 | 先确认什么 | 当前事实 | 接手动作 |
 | --- | --- | --- |
-| 代码基线 | 工作区含本轮 DeepSeek Harness 双接入、右键双源开关、测试、本文修改与本地 `0.4.0-beta.2` 构建；尚未提交；`npm test` 为 49/49 PASS | 先运行 `git status --short --branch`；继续修改前跑对应聚焦测试，不要覆盖当前改动 |
+| 代码基线 | `main` 已包含 DeepSeek Harness 双接入、右键双源开关和 Windows 安装版 Codex 余额路径修复；`npm test` 为 50/50 PASS | 先运行 `git status --short --branch`；继续修改前跑对应聚焦测试，不要覆盖当前改动 |
 | 结构索引 | CodeGraph 健康，当前索引覆盖第一方 JavaScript 与发布工作流 | 结构、调用关系和影响范围先问 CodeGraph，不递归扫描依赖或素材 |
-| 当前发布 | GitHub Pre-release 仍为 `v0.4.0-beta.1`；本地 `dist/` 只保留新构建的 `0.4.0-beta.2` Setup 与 Portable | 发布任务才读取第 13–15 节并重新复算哈希 |
-| 本机安装 | 已从 GitHub Release 下载并验证 Setup SHA-256 `CCE31469EB15EEE6A64D4C4EF28268CADE9ACF85D4427BE0F1EEB1FD2DB15BD7`，完成纯净重装和首次运行一键启用 | 不要再重装；下一步只完成 Hook 信任与桌面端复验 |
-| Hook 当前阻塞 | 四条蕾米埃尔 Hook、转发脚本和 Named Pipe 已恢复，用户已看到正确气泡消息；但新定义仍显示 4 条待审核，持久化信任为 0/4，Codex Desktop 尚未完全重启 | 在 CLI `/hooks` 逐条审核信任，再完全退出/重开 Codex Desktop，用真实新本地任务验收 |
-| DeepSeek 当前状态 | 默认 `DSH_HOME` 的 `web` profile 已安装 `remiel-dsh-bridge`；真实 `0.1.1-rc.2` 临时 Harness 已通过真实 Key 余额查询 | 安装前已经运行的 Harness 进程尚未加载 Bundle，必须完全退出并重开；真实 lifecycle 通知仍需单独验收 |
+| 当前发布 | GitHub Pre-release 为 `v0.4.0-beta.3`；Actions run `32757199663` 成功，Setup、Portable 与 `SHA256SUMS.txt` 完整 | 发布任务才读取第 13–15 节并重新复算哈希 |
+| 本机安装 | 已从 GitHub Release 下载并验证 beta.3 Setup SHA-256 `BF9EBECE880C7547D9BF4DE6126D1767771581AAF6B5058B48FE3B50BDEC1FC5`，注册表版本与用户实机余额显示均通过 | 不要再重装；下一步只完成 Codex lifecycle 桌面端复验 |
+| Hook 当前阻塞 | 用户已完成四条蕾米埃尔 Hook 信任并完全重启 Codex Desktop；尚未记录真实新本地任务的开始、工具和结束气泡 | 用真实新本地任务验收 lifecycle；不要用余额成功替代 Hook 通知验收 |
+| DeepSeek 当前状态 | 默认 `DSH_HOME` 的 `web` profile 已安装 `remiel-dsh-bridge`；用户完全重启 Harness 后确认真实 Web UI 任务正常显示，真实 Key 余额查询也已通过 | 后续只需在 Bundle 或 Harness 版本变化时重新验收 |
 | 生命周期验收 | Hook → PowerShell → Pipe → 气泡链路可用；尚不能据此宣称“干净重装后的桌面端正式接入完成” | 只有 4/4 信任、完整重启和真实桌面任务消息三项同时成立，才把 `PARTIAL` 改为完成 |
 | 工作区清理 | 2026-08-24 已确认无临时文件、日志、补丁残留或旧文档；空的忽略目录 `release/` 已移入回收站 | 保留源码、测试、两套素材、`node_modules/`、`.codegraph/` 和当前 `dist/` 发布物 |
 
@@ -39,14 +39,14 @@
 
 ## 1. 项目目标与真实边界
 
-蕾米埃尔是一个开源的 Windows x64 Electron 桌宠。人物动作、任意时刻拖动、气泡、托盘、独立缩放和外观已经完成；0.3.0 增加了单击额度查询、无闪媒体切换和按下时状态决定的拖动动作锁；0.4.0 Beta 缩短气泡到头部的距离、增加安全通知摘要和首次运行向导，并同时发行 NSIS 与 Portable。当前工作区在保留全部 Codex 能力的同时新增 DeepSeek Harness 双接入，已生成本地 `0.4.0-beta.2` Setup/Portable，但尚未发布新的 GitHub Release。
+蕾米埃尔是一个开源的 Windows x64 Electron 桌宠。人物动作、任意时刻拖动、气泡、托盘、独立缩放和外观已经完成；0.3.0 增加了单击额度查询、无闪媒体切换和按下时状态决定的拖动动作锁；0.4.0 Beta 缩短气泡到头部的距离、增加安全通知摘要和首次运行向导，并同时发行 NSIS 与 Portable。`0.4.0-beta.3` 已公开发布，在保留 Codex 与 DeepSeek Harness 双接入的同时修复了从 Explorer 启动的 Windows 安装版无法定位 Codex Desktop 内置 `codex.exe` 的问题。
 
 | 能力或边界 | 当前设计 |
 | --- | --- |
 | 桌宠交互 | 待机、单击、消息、拖动拿起/保持/放下；物理拖动始终可用 |
 | 外观 | 人物与气泡独立五档缩放、人物镜像、气泡左右偏好、多屏约束 |
 | Codex 通知 | 用户主动安装并审核信任的四类 lifecycle Hook，经隐藏 PowerShell 清洗和本机 Named Pipe 传入 |
-| Codex 额度 | 单击时临时启动 PATH 中的 `codex.exe app-server`，只调用 `account/rateLimits/read` |
+| Codex 额度 | 单击时临时启动 `codex.exe app-server`，Windows 优先解析 Codex Appx 安装目录中的绝对路径，找不到时再回退 PATH；只调用 `account/rateLimits/read` |
 | DeepSeek Harness 通知 | 用户从托盘把内置 `remiel-dsh-bridge` Bundle 安装到官方 `web` profile；插件只监听 `session/event` 并发送受限摘要 |
 | DeepSeek 余额 | 单击时连接插件拥有的只读余额 Pipe；插件每次临时解析 `DEEPSEEK_API_KEY` 并请求官方 `GET /user/balance`，Key 不进入桌宠进程或 Pipe |
 | 非聊天客户端 | 没有输入框、历史面板、计划面板或审批按钮 |
@@ -84,27 +84,28 @@
 | 双源消息监控开关 | 已实现 | 人物右键分别勾选 Codex/DeepSeek，可同时、单独或全部关闭；旧配置默认同时监控，关闭来源时立即清理其当前与等待通知 |
 | 安全通知摘要 | 已实现 | Bridge v1 可选 `detailText`；任务开头、安全命令、basename、审批和结束摘要均由 PowerShell 在 Pipe 前生成 |
 | 首次运行向导 | 已实现 | 无有效 `position.json` 时原生选择启用或跳过；结束即保存位置；启用后要求完全重启并在 `/hooks` 审核信任 |
-| 自动测试 | 通过 | `npm test`：49/49 PASS |
+| 自动测试 | 通过 | `npm test`：50/50 PASS |
 | 本地构建 | 通过 | NSIS 与 Portable 均已生成；ASAR 内容、安装/卸载入口、桌面/开始菜单快捷方式和 Portable 启动已复核 |
-| GitHub 发布 | 通过 | Actions run `32706419364` 成功；Pre-release 三个资产完整；回下载两个 EXE 与 `SHA256SUMS.txt` 一致 |
+| GitHub 发布 | 通过 | `v0.4.0-beta.3` Actions run `32757199663` 成功；Pre-release 三个资产完整；Setup 的 GitHub/SHA256SUMS/本地回下载三方 SHA-256 一致 |
 | GitHub 纯净重装 | 通过 | 2026-08-24 已卸载旧安装、重置蕾米埃尔 userData、清除自身 Hook/旧信任，再从公开 Release 下载固定哈希 Setup 并完成首次运行 |
-| Hook 重新信任 | 待完成 | 新 CLI 明确显示 4 hooks need review；四条蕾米埃尔 `trusted_hash` 尚未重新写入，不得绕过信任 |
+| beta.3 修复版升级 | 通过 | 2026-08-25 已从 GitHub Release 校验并安装 beta.3；注册表显示 `0.4.0-beta.3`，用户实机单击已正常显示 Codex 剩余额度 |
+| Hook 重新信任 | 通过（用户确认） | 用户已在 CLI `/hooks` 完成四条蕾米埃尔 Hook 审核信任，并完全重启 Codex Desktop |
 | 桌面快捷方式 | 有效 | `%USERPROFILE%\Desktop\蕾米埃尔.lnk` 指向当前用户安装的 0.4.0 Beta；旧 0.3.0 快捷方式已进回收站 |
 | 开发态实机 | 通过 | 2026-08-24 已验证拖动锁、消息、点击、取消、位置保存、额度、菜单、缩放和计时 |
 | DeepSeek 真实烟雾 | 通过（真实 Key 余额） | 默认 `DSH_HOME` 的真实 `0.1.1-rc.2` `web` profile 已安装 Bundle；隔离端口临时 Harness 成功加载，余额 Pipe 返回合法真实余额；未读取、记录或复制 Key，临时进程已清理 |
-| DeepSeek 真实任务 lifecycle | 未验证 | 不得宣称真实 Harness lifecycle 通知已通过；事件映射与安全边界仍只用固定假事件验证 |
+| DeepSeek 真实任务 lifecycle | 通过（用户确认） | 完全重启 `dsh web` 后，用户在 Web UI 发起真实任务并确认桌宠正常显示通知 |
 
 | 正式验收事实 | 状态 |
 | --- | --- |
 | 2026-08-24 从公开 GitHub Release 完成卸载、用户数据重置、Hook/旧信任清理和 Setup 重装 | 已确认 |
 | 首次运行向导重新生成有效 `position.json`、转发脚本和四条 `~/.codex/hooks.json` handler | 已确认 |
-| 新 CLI 显示四条蕾米埃尔 Hook 为 `new or changed`、Active 0、需要审核；持久化信任为 0/4 | 待用户审核 |
+| 新 CLI 初次显示四条蕾米埃尔 Hook 为 `new or changed`；用户随后完成 4/4 审核信任 | 已确认 |
 | 普通 Codex CLI 的真实 `UserPromptSubmit` 会运行 Hook | 已确认 |
 | 桌面安装包内置 `codex.exe 0.149.0-alpha.4.1` 的新进程会运行同一 Hook | 已确认 |
 | 用户已经看到正确气泡消息，证明 Hook → PowerShell → Named Pipe → 桌宠窗口链路可用 | 已确认，但不等于新信任/重启完成 |
-| 当前 Codex Desktop app-server 启动早于重装后的 Hook 写入，尚未完成完全退出和重开 | 待用户操作 |
+| Codex Desktop 已在 Hook 信任后完全退出并重开 | 已确认 |
 | 完全退出并重开 Codex 桌面应用后，在真实新本地任务中收到通知 | 待用户确认 |
-| 生命周期通知总体验收 | `PARTIAL`，不得写正式完成 |
+| Codex 生命周期通知总体验收 | `PARTIAL`；尚缺真实新本地任务开始、工具和结束气泡确认 |
 
 官方文档明确要求非托管 Hook 按当前定义哈希审核并信任，但没有明确承诺 `hooks.json` 会被已运行的桌面任务热加载。当前旧桌面进程可能继续使用内存中已加载的旧定义，因此“能看到消息”只能证明传输与显示链路，不能替代新定义 4/4 信任和完全重启验收。
 
@@ -121,7 +122,7 @@
 | Hook 配置层 | 安装、修复、卸载和备份用户 Hook | 用户菜单、`hooks.json` | 原子更新配置和转发脚本 | `src/codex-hook.js` |
 | Hook 运行桥 | 白名单提取并快速写入本机 Pipe | Codex lifecycle JSON | 单行 UTF-8 JSON；失败时快速无操作退出 | 自动生成 PowerShell + `src/codex-notifications.js` |
 | 通知协调器 | 校验、来源标记、节流、双槽与会话切换 | Codex/DeepSeek 合法 Pipe 消息和 renderer 回执 | 有界桌宠通知 | `src/codex-notifications.js` |
-| 额度客户端 | 临时 App Server JSONL 握手与格式化 | renderer 单击 | 一条额度/失败气泡，随后终止子进程 | `src/codex-rate-limit.js` |
+| 额度客户端 | 解析 Codex 可执行文件、临时 App Server JSONL 握手与格式化 | renderer 单击 | 一条额度/失败气泡，随后终止子进程 | `src/codex-rate-limit.js` |
 | DeepSeek 桌宠侧 | Bundle 暂存、固定 CLI、profile 状态与余额 Pipe 客户端 | 托盘操作、renderer 单击 | 只改 `web` profile；只接收短文案/固定错误码 | `src/deepseek-harness.js` |
 | DeepSeek Harness Bundle | 监听 `session/event`、安全摘要、临时解析 Key、官方余额请求 | Harness 会话事件、`ctx.credentials` | 双源通知 Pipe 或余额 Pipe；不改变 Harness 任务 | `src/integrations/deepseek-harness/*` |
 | 配置存储 | 兼容读取和串行原子保存 | 位置和视觉偏好 | Electron userData 下的 `position.json` | `src/position-store.js` |
@@ -307,14 +308,14 @@ DeepSeek 余额使用独立的 `\\.\pipe\remiel-desktop-pet-deepseek-v1`。桌�
 renderer 单击
   → preload: requestBalance()
   → main 按 position.json 的 balanceSource 分流并复用当前请求
-  → Codex：临时 app-server → account/rateLimits/read
+  → Codex：Windows Appx 安装位置或 PATH → 临时 app-server → account/rateLimits/read
   → DeepSeek：余额 Pipe → Harness 插件临时 resolve(DEEPSEEK_API_KEY)
              → GET https://api.deepseek.com/user/balance
   → 本地时区格式化并显示 6 秒
   → 成功、失败、超时或退出时清理各自资源
 ```
 
-Codex 剩余比例按 `100 - usedPercent` 计算并限制到 0–100，文案为 `Codex 剩余 76%，8月30日 02:13 重置`；该流程仍不读取对话、认证文件或模型内容。DeepSeek 成功文案保留全部返回币种，例如 `DeepSeek 余额：CNY 110.00，USD 15.00`；`is_available=false` 显示余额不可用，未启动 Harness、未配置 Key、请求失败、无效响应和不支持版本分别收敛为短文案。`DEEPSEEK_API_KEY` 只在插件单次请求局部变量和 Authorization header 中短暂存在，不进入桌宠进程、Pipe、日志或持久化。
+Windows 安装版先通过 `Get-AppxPackage -Name OpenAI.Codex` 选择最高版本的安装位置并校验 `<InstallLocation>/app/resources/codex.exe`，再启动临时 App Server；如果没有 Appx 安装则回退普通 `codex.exe`，兼容全局 CLI 和非 Windows 环境。Codex 剩余比例按 `100 - usedPercent` 计算并限制到 0–100，文案为 `Codex 剩余 76%，8月30日 02:13 重置`；该流程仍不读取对话、认证文件或模型内容。DeepSeek 成功文案保留全部返回币种，例如 `DeepSeek 余额：CNY 110.00，USD 15.00`；`is_available=false` 显示余额不可用，未启动 Harness、未配置 Key、请求失败、无效响应和不支持版本分别收敛为短文案。`DEEPSEEK_API_KEY` 只在插件单次请求局部变量和 Authorization header 中短暂存在，不进入桌宠进程、Pipe、日志或持久化。
 
 ## 8. Codex 接入：安装阶段
 
@@ -410,7 +411,7 @@ PowerShell 只保留规范化的任务开头、安全命令程序/子命令、�
 
 `/hooks` 是 Codex CLI 的 Hook 管理界面，不是桌面宠物的聊天入口，也不是插件商店。
 
-2026-08-24 纯净重装后的当前状态是启动 CLI 即提示 `4 hooks are new or changed`。进入事件详情应看到 `New hook - review required`；完成审核后，本节下面的 `[x]` 和 `Trust: Trusted` 才是目标状态。
+2026-08-24 纯净重装后启动 CLI 曾提示 `4 hooks are new or changed`；2026-08-25 用户已完成四条审核信任。后续若 Hook 定义变化，仍应进入事件详情审核，以下 `[x]` 和 `Trust: Trusted` 是目标状态。
 
 第一层只列事件名称、Installed 和 Active 数量，因此不会出现蕾米埃尔图标或名字。正确检查方式：
 
@@ -532,7 +533,7 @@ PowerShell 只保留规范化的任务开头、安全命令程序/子命令、�
 | --- | --- |
 | `src/main.js` | Electron 主进程总装配：单实例、两个窗口、托盘和人物菜单、IPC、拖动、气泡计时、双来源余额/消息开关、屏幕约束、偏好保存及两种接入状态 |
 | `src/first-run.js` | 首次运行协调：只以有效配置是否存在判断，确保选择、启用失败和结果提示后都保存位置；通过注入回调保持可测 |
-| `src/codex-rate-limit.js` | 临时 App Server JSONL 客户端：初始化、额度读取、校验与本地时区格式化，以及成功/失败/超时/退出清理 |
+| `src/codex-rate-limit.js` | Codex 可执行文件解析与临时 App Server JSONL 客户端：Windows Appx 绝对路径、PATH 回退、初始化、额度读取、校验、本地时区格式化和资源清理 |
 | `src/codex-hook.js` | Hook 配置边界：解析校验、幂等安装、安全卸载、备份、原子写入、带 BOM 的隐藏 PowerShell 安全摘要转发器和状态检查 |
 | `src/codex-notifications.js` | 通知 Pipe 输入边界：严格解析可选 `source`、来源开关过滤/清理、旧消息默认 Codex、`source + sessionId` 最近任务、双槽、3 秒节流和分帧服务器 |
 | `src/deepseek-harness.js` | 桌宠侧 DeepSeek 边界：Bundle 暂存、固定 rc.2 npx 参数、web profile 状态检查、CLI 生命周期和有界余额 Pipe 客户端 |
@@ -558,7 +559,7 @@ PowerShell 只保留规范化的任务开头、安全命令程序/子命令、�
 | `test/media-controller.test.js` | 视频首帧与静态保持帧前保留旧画面、过期切换无效和单击 2 倍速 |
 | `test/window-geometry.test.js` | 镜像与信息方向四组合、头部内移、自动换边、五档缩放、脚底锚定、多屏恢复和拖动坐标 |
 | `test/position-store.test.js` | 气泡五档缩放、余额来源与双监控开关的默认/持久化/损坏回退、原子保存和连续写入 |
-| `test/codex-rate-limit.test.js` | App Server JSONL 初始化、额度解析和格式化、无关消息、坏响应、超时与进程清理 |
+| `test/codex-rate-limit.test.js` | Windows Appx 安装位置解析、PATH 回退、App Server JSONL 初始化、额度解析和格式化、坏响应、超时与进程清理 |
 | `test/codex-hook.test.js` | Hook 幂等安装、备份、保留其他 Hook、非法 JSON、快速退出，以及真实 PowerShell 对任务预览、安全命令、basename、审批和敏感字段的 Pipe 边界 |
 | `test/codex-notifications.test.js` | `source`/旧消息兼容、来源过滤和即时清理、Pipe 分包、50 字限制、回执续发、双槽、节流和双来源最近任务切换 |
 | `test/deepseek-harness.test.js` | Bundle 暂存、固定 CLI、profile 状态、事件安全摘要、敏感字段隔离、余额格式/错误/超时、并发 Pipe、版本门禁和清理 |
@@ -590,12 +591,12 @@ PowerShell 只保留规范化的任务开头、安全命令程序/子命令、�
 | --- | --- |
 | `node_modules/` | npm 安装的第三方开发依赖；不进入 Agent 阅读范围，损坏时用锁文件重装 |
 | `.codegraph/` | 生成的结构索引；用于导航，不手工编辑，不视为产品源码 |
-| `dist/蕾米埃尔-Setup-0.4.0-beta.2.exe` | 当前本地 NSIS 单击安装器；当前用户安装、桌面/开始菜单快捷方式、卸载入口、安装后启动 |
-| `dist/蕾米埃尔-Portable-0.4.0-beta.2.exe` | 当前本地免安装单文件版 |
+| `dist/蕾米埃尔-Setup-0.4.0-beta.3.exe` | 当前本地 NSIS 单击安装器；当前用户安装、桌面/开始菜单快捷方式、卸载入口、安装后启动 |
+| `dist/蕾米埃尔-Portable-0.4.0-beta.3.exe` | 当前本地免安装单文件版 |
 | `artifacts/` | 可再生成的临时素材验证输出；当前已清理，不是事实源，不提交 Git |
-| `dist/win-unpacked/`、`dist/builder-debug.yml`、`dist/*.blockmap`、`dist/latest.yml` | electron-builder 可再生成中间物；当前已清理，不提交 Git |
+| `dist/win-unpacked/`、`dist/builder-debug.yml`、`dist/*.blockmap`、`dist/latest.yml` | electron-builder 可再生成中间物；本地构建后可存在，均被忽略且不提交 Git |
 
-项目目录不再保留 0.1.0、0.2.0、0.3.0 发布包；旧 0.3.0 EXE 和旧快捷方式在新 Release 回下载复核后已移入 Windows 回收站，可在回收站清空前恢复。不要从回收站内容推断项目现状。
+项目目录不再保留 0.1.0、0.2.0、0.3.0 发布包；`dist/` 当前还保留 beta.2 与 beta.3 的本地构建及可再生成中间物，它们均不提交 Git。旧 0.3.0 EXE 和旧快捷方式在 Release 回下载复核后已移入 Windows 回收站，可在回收站清空前恢复。不要从回收站内容推断项目现状。
 
 electron-builder 本地仍生成计划中的中文文件名。GitHub 会移除 Release 资产名的非 ASCII 前缀，因此自动发布先复制为 `Remielle-Setup-<version>.exe` 和 `Remielle-Portable-<version>.exe`，并为两个资产设置中文显示标签；二进制内容与中文本地构建物相同，`SHA256SUMS.txt` 使用实际可下载文件名。
 
@@ -664,10 +665,10 @@ powershell -ExecutionPolicy Bypass -File .\scripts\process-assets.ps1
 
 | 文件 | SHA-256 |
 | --- | --- |
-| `dist/蕾米埃尔-Setup-0.4.0-beta.2.exe`（本地构建） | `34245D7705894325274D2378303448964EBA26144599ABDD25F6E8317C478A93` |
-| `dist/蕾米埃尔-Portable-0.4.0-beta.2.exe`（本地构建） | `810F50747BA697D75F79E58DB7F8E0899C707F432A82E84014B70753B92BAD89` |
-| `Remielle-Setup-0.4.0-beta.1.exe`（GitHub Release） | `CCE31469EB15EEE6A64D4C4EF28268CADE9ACF85D4427BE0F1EEB1FD2DB15BD7` |
-| `Remielle-Portable-0.4.0-beta.1.exe`（GitHub Release） | `B3F29C648AD7A2AF8625C48A6949EDAF055098BC3725929DCF84EFBACCD8FF82` |
+| `dist/蕾米埃尔-Setup-0.4.0-beta.3.exe`（本地构建） | `B05DCC07AFF3BFD6489DEAE5F5B14E48C6279985F3E1E517B5D35DE0B1237180` |
+| `dist/蕾米埃尔-Portable-0.4.0-beta.3.exe`（本地构建） | `E64E7DBEAFF3204BE9FC5F9B9A0E2331A679AB7606EF6706F63A463542372543` |
+| `Remielle-Setup-0.4.0-beta.3.exe`（GitHub Release） | `BF9EBECE880C7547D9BF4DE6126D1767771581AAF6B5058B48FE3B50BDEC1FC5` |
+| `Remielle-Portable-0.4.0-beta.3.exe`（GitHub Release） | `0534A7EDF984E6C932E257895C76E38A70658A7EF255F569D9F3113C51132FB0` |
 
 GitHub Actions 构建不保证与本机 Electron-builder 输出逐字节一致；Release 的公开权威哈希以同一 Release 附带并经回下载复核的 `SHA256SUMS.txt` 为准。任何素材或发布任务都应先复算相关哈希。不要把完整用户提示词、工具输入输出、认证数据、真实 hooks.json、Hook 备份、测试 userData 或本机日志打进 ASAR/EXE。
 
@@ -689,4 +690,4 @@ GitHub Actions 构建不保证与本机 Electron-builder 输出逐字节一致�
   + GitHub Actions 双目标预发布
 ```
 
-Codex 额度已经通过真实 `codex.exe app-server` 成功路径验证；Codex lifecycle 通知下一步仍是 `/hooks` 完成四条审核信任、完全退出重开 Codex Desktop，再用真实新本地任务验收。DeepSeek 默认 `web` profile 已安装 Bundle，并通过真实 `0.1.1-rc.2` 临时 Harness、余额 Pipe、真实凭据解析和官方余额接口成功路径验证；安装前已运行的 Harness 仍需完全退出重开，真实任务 lifecycle 通知尚未端到端验证，不得扩大宣称。本轮已运行 `npm test` 与 `npm run build`，生成并冒烟启动本地 `0.4.0-beta.2` Setup/Portable；旧 `0.4.0-beta.1` 与构建中间物已移入回收站，`dist/` 只保留两个新 EXE。未发布新的 GitHub Release，也没有修改现有 Codex Hook 定义或 PowerShell 转发器。保留现有隐私边界，不用 transcript 轮询，也不用任何接入创建 Thread/Turn 来冒充当前任务。
+Codex 额度已在与 Explorer 等价、不含 Codex 资源目录的 PATH 中通过真实 Appx 绝对路径启动 `codex.exe app-server`，并由用户确认安装版气泡可正常显示剩余额度；此前失败根因是 beta.2 依赖了只有 Codex 子进程环境才具备的 PATH。Codex lifecycle 通知仍需以真实新本地任务的开始、工具和结束气泡单独验收，不把额度成功扩大为 Hook 通知成功。DeepSeek 默认 `web` profile 已安装 Bundle，并通过真实 `0.1.1-rc.2` 临时 Harness、余额 Pipe、真实凭据解析和官方余额接口成功路径验证。`v0.4.0-beta.3` 已从提交 `582f0b4` 创建 annotated tag 并公开为 Pre-release，Actions run `32757199663` 成功；Setup 回下载哈希已与 Release 摘要和 `SHA256SUMS.txt` 三方核对，本机已升级安装并显示版本 `0.4.0-beta.3`。保留现有隐私边界，不用 transcript 轮询，也不用任何接入创建 Thread/Turn 来冒充当前任务。
