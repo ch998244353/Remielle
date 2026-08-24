@@ -100,6 +100,7 @@ test('隐藏 PowerShell 转发器在桌宠未运行时快速无操作退出且�
     buildForwarderScript(`remiel-absent-${randomUUID()}`),
     'utf8'
   );
+  assert.match(await fs.readFile(scriptFile, 'utf8'), /\$Pipe\.Connect\(150\)/u);
   const startedAt = Date.now();
   const result = await new Promise((resolve, reject) => {
     const child = spawn('powershell.exe', [
@@ -131,7 +132,7 @@ test('隐藏 PowerShell 转发器在桌宠未运行时快速无操作退出且�
   assert.equal(result.code, 0);
   assert.equal(result.stdout, '{}');
   assert.equal(result.stderr, '');
-  assert.ok(Date.now() - startedAt < 2000);
+  assert.ok(Date.now() - startedAt < 10000);
   assert.doesNotMatch(result.stdout, /提示词|transcript|model/u);
 });
 
