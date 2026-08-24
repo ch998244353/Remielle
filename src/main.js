@@ -40,7 +40,7 @@ const { runFirstRun } = require('./first-run.js');
 const CHARACTER_READY_CHANNEL = 'character:ready';
 const TEST_MESSAGE = '蕾米埃尔收到了一条测试消息。';
 const BUBBLE_VISIBLE_MS = 6000;
-const BUBBLE_SIZE = { width: 328, height: 160 };
+const BUBBLE_SIZE = { width: 336, height: 184 };
 const CHARACTER_SIZE = { width: 432, height: 300 };
 const PIPE_PATH = `\\\\.\\pipe\\${PIPE_NAME}`;
 const CHARACTER_WINDOW_OPTIONS = {
@@ -69,7 +69,7 @@ let quitting = false;
 let dragSession = null;
 let ipcRegistered = false;
 let bubbleReady = false;
-let bubbleText = null;
+let bubbleContent = null;
 let bubbleTimer = null;
 let characterReady = false;
 let windowsHiddenByTray = false;
@@ -187,19 +187,22 @@ function registerIpc() {
     if (moved) persistCurrentPosition().catch(console.error);
   });
 
-  ipcMain.on('bubble:show', (event, text) => {
-    if (
-      event.sender !== characterWindow?.webContents ||
-      typeof text !== 'string' ||
-      !text ||
-      Array.from(text).length > 50
-    ) return;
-    showBubbleText(text);
+  ipcMain.on('bubble:show', (event, content) => {
+    if (event.sender !== characterWindow?.webContents) return;
+    showBubbleContent(content);
   });
 
   ipcMain.on('bubble:hide', (event) => {
     if (event.sender !== characterWindow?.webContents) return;
     hideBubble();
+  });
+
+  ipcMain.on('bubble:page-change', (event) => {
+    if (
+      event.sender !== bubbleWindow?.webContents ||
+      bubbleContent?.mode !== 'project'
+    ) return;
+    armBubbleTimer();
   });
 
   ipcMain.handle('balance:read', (event) => {
@@ -317,30 +320,61 @@ function clearBubbleTimer() {
 
 function hideBubble() {
   clearBubbleTimer();
-  bubbleText = null;
-  bubbleWindow?.hide();
+  bubbleContent = null;
+  if (bubbleWindow && !bubbleWindow.isDestroyed()) {
+    bubbleWindow.setIgnoreMouseEvents(true);
+    bubbleWindow.hide();
+  }
 }
 
-function showBubbleText(text) {
-  if (
-    typeof text !== 'string' ||
-    !text ||
-    Array.from(text).length > 50
-  ) return false;
-  bubbleText = text;
+function armBubbleTimer() {
   clearBubbleTimer();
   bubbleTimer = setTimeout(() => {
     bubbleTimer = null;
-    bubbleText = null;
-    bubbleWindow?.hide();
+    bubbleContent = null;
+    if (bubbleWindow && !bubbleWindow.isDestroyed()) {
+      bubbleWindow.setIgnoreMouseEvents(true);
+      bubbleWindow.hide();
+    }
   }, BUBBLE_VISIBLE_MS);
+}
+
+function showBubbleContent(content) {
+  if (typeof content === 'string') {
+    if (!content || Array.from(content).length > 50) return false;
+    content = { mode: 'plain', text: content };
+  } else if (
+    content?.mode !== 'project' ||
+    !['codex', 'deepseek'].includes(content.source) ||
+    typeof content.projectName !== 'string' ||
+    !content.projectName ||
+    Array.from(content.projectName).length > 80 ||
+    typeof content.detail !== 'string' ||
+    !content.detail ||
+    Array.from(content.detail).length > 1024
+  ) return false;
+  else content = {
+    mode: 'project',
+    source: content.source,
+    projectName: content.projectName,
+    detail: content.detail
+  };
+  bubbleContent = content;
+  if (bubbleWindow && !bubbleWindow.isDestroyed()) {
+    bubbleWindow.setIgnoreMouseEvents(content.mode !== 'project');
+  }
+  armBubbleTimer();
   updateBubble();
   return true;
 }
 
+function showBubbleText(text) {
+  return showBubbleContent(text);
+}
+
 function updateBubble() {
   if (
-    !bubbleText ||
+    !bubbleContent ||
     !bubbleReady ||
     windowsHiddenByTray ||
     !characterWindow ||
@@ -364,10 +398,7 @@ function updateBubble() {
     y: Math.round(position.y),
     ...size
   });
-  bubbleWindow.webContents.send('bubble:update', {
-    text: bubbleText,
-    side: position.side
-  });
+  bubbleWindow.webContents.send('bubble:update', { ...bubbleContent, side: position.side });
   if (!bubbleWindow.isVisible()) bubbleWindow.showInactive();
 }
 

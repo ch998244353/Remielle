@@ -82,3 +82,36 @@ test('消息气泡使用高于普通置顶窗口的最上层级且保持鼠标�
   assert.match(bubbleWindow, /setAlwaysOnTop\(true, 'screen-saver'\)/u);
   assert.match(bubbleWindow, /setIgnoreMouseEvents\(true\)/u);
 });
+
+test('项目通知使用 16:9 气泡、固定项目标题和滚轮分页，纯文本消息仍穿透', async () => {
+  const root = path.join(__dirname, '..');
+  const [main, petPreload, petRenderer, html, css, bubblePreload, bubbleRenderer] = await Promise.all([
+    fs.readFile(path.join(root, 'src', 'main.js'), 'utf8'),
+    fs.readFile(path.join(root, 'src', 'preload.js'), 'utf8'),
+    fs.readFile(path.join(root, 'src', 'renderer', 'renderer.js'), 'utf8'),
+    fs.readFile(path.join(root, 'src', 'bubble', 'index.html'), 'utf8'),
+    fs.readFile(path.join(root, 'src', 'bubble', 'style.css'), 'utf8'),
+    fs.readFile(path.join(root, 'src', 'bubble-preload.js'), 'utf8'),
+    fs.readFile(path.join(root, 'src', 'bubble', 'renderer.js'), 'utf8')
+  ]);
+
+  assert.match(main, /BUBBLE_SIZE = \{ width: 336, height: 184 \}/u);
+  assert.match(css, /width:\s*320px/u);
+  assert.match(css, /height:\s*180px/u);
+  assert.match(html, /id="source-name"/u);
+  assert.match(html, /id="project-name"/u);
+  assert.match(html, /id="source-name"[\s\S]*?·[\s\S]*?id="project-name"/u);
+  assert.match(html, /id="message-detail"/u);
+  assert.match(css, /#b02f61/iu);
+  assert.match(css, /white-space:\s*nowrap/u);
+  assert.match(css, /overflow-y:\s*auto/u);
+  assert.match(petPreload, /mode === 'project'/u);
+  assert.match(petRenderer, /notification\.projectName/u);
+  assert.match(bubblePreload, /bubble:page-change/u);
+  assert.match(bubbleRenderer, /addEventListener\('wheel'/u);
+  assert.match(bubbleRenderer, /clientHeight/u);
+  assert.match(bubbleRenderer, /reportPageChange/u);
+  assert.match(main, /bubble:page-change/u);
+  assert.match(main, /ipcMain\.on\('bubble:page-change'[\s\S]*?armBubbleTimer\(\);/u);
+  assert.match(main, /setIgnoreMouseEvents\(content\.mode !== 'project'\)/u);
+});

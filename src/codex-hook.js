@@ -118,7 +118,9 @@ function Safe-Basename([object] $Value) {
 }
 
 function Safe-CommandSummary([object] $ToolInput) {
-  $Command = Normalize-Preview $ToolInput.command 2048
+  $Command = [string]$ToolInput.command
+  if ([string]::IsNullOrWhiteSpace($Command)) { $Command = [string]$ToolInput.cmd }
+  $Command = Normalize-Preview $Command 2048
   $FirstLine = ($Command -split '[\\r\\n;|&]')[0].Trim()
   if ($FirstLine -match '^npm(?:\\.cmd)?\\s+test(?:\\s|$)') { return '正在运行 npm test' }
   if ($FirstLine -match '^npm(?:\\.cmd)?\\s+run\\s+([A-Za-z0-9:_-]{1,40})(?:\\s|$)') {
@@ -133,6 +135,30 @@ function Safe-CommandSummary([object] $ToolInput) {
     return "正在运行 $($Matches[1])"
   }
   return '正在运行命令'
+}
+
+function Safe-CommandText([object] $ToolInput) {
+  $Command = [string]$ToolInput.command
+  if ([string]::IsNullOrWhiteSpace($Command)) { $Command = [string]$ToolInput.cmd }
+  if ([string]::IsNullOrWhiteSpace($Command)) { return '' }
+  $Command = $Command.Trim()
+  $Command = [regex]::Replace(
+    $Command,
+    '(?i)(--?(?:api[-_]?key|token|password|passwd|secret|authorization))(=|\\s+)(?:"[^"]*"|''[^'']*''|[^\\s]+)',
+    '$1$2***'
+  )
+  $Command = [regex]::Replace(
+    $Command,
+    '(?im)\\b([A-Z0-9_]*(?:TOKEN|API_KEY|APIKEY|PASSWORD|PASSWD|SECRET|AUTHORIZATION)[A-Z0-9_]*)\\s*=\\s*(?:"[^"]*"|''[^'']*''|[^\\s]+)',
+    '$1=***'
+  )
+  $Command = [regex]::Replace($Command, '(?i)(Bearer\\s+)[A-Za-z0-9._~+/-]+=*', '$1***')
+  $Command = [regex]::Replace($Command, '(?i)\\bsk-[A-Za-z0-9_-]{6,}\\b', 'sk-***')
+  $Marker = '…命令过长，已截断'
+  if ($Command.Length -gt 1024) {
+    return (Limit-Text $Command (1024 - $Marker.Length)) + $Marker
+  }
+  return $Command
 }
 
 function Safe-ToolSummary([string] $ToolName, [object] $ToolInput) {
@@ -188,11 +214,19 @@ try {
     sessionId = $SessionId
     turnId = $TurnId
     event = $EventName
+    projectName = $(
+      $ProjectName = Safe-Basename ([string]$InputObject.cwd).TrimEnd('\\', '/')
+      if ($ProjectName) { $ProjectName } else { '未知项目' }
+    )
     sentAt = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
   }
   if ($EventName -eq 'PreToolUse' -or $EventName -eq 'PermissionRequest') {
     $Message.toolName = Limit-Text ([string]$InputObject.tool_name) 128
     $Detail = Safe-ToolSummary $Message.toolName $InputObject.tool_input
+    if ($Message.toolName -match '^(Bash|exec_command|write_stdin)$') {
+      $CommandText = Safe-CommandText $InputObject.tool_input
+      if ($CommandText) { $Message.commandText = $CommandText }
+    }
     if ($EventName -eq 'PermissionRequest') {
       $Detail = '等待确认：' + ($Detail -replace '^正在', '')
     }

@@ -11,8 +11,24 @@ contextBridge.exposeInMainWorld('petApi', {
   moveDrag: () => ipcRenderer.send('drag:move'),
   endDrag: () => ipcRenderer.send('drag:end'),
   requestBalance: () => ipcRenderer.invoke('balance:read'),
-  showBubble: (text) => {
-    if (typeof text === 'string') ipcRenderer.send('bubble:show', text);
+  showBubble: (content) => {
+    if (typeof content === 'string') {
+      ipcRenderer.send('bubble:show', content);
+    } else if (
+      content?.mode === 'project' &&
+      ['codex', 'deepseek'].includes(content.source) &&
+      typeof content.projectName === 'string' &&
+      content.projectName.length <= 80 &&
+      typeof content.detail === 'string' &&
+      content.detail.length <= 1024
+    ) {
+      ipcRenderer.send('bubble:show', {
+        mode: 'project',
+        source: content.source,
+        projectName: content.projectName,
+        detail: content.detail
+      });
+    }
   },
   hideBubble: () => ipcRenderer.send('bubble:hide'),
   reportNotification: (id, status) => {
@@ -27,7 +43,17 @@ contextBridge.exposeInMainWorld('petApi', {
   notifyIdle: () => ipcRenderer.send('character:idle'),
   onNotification: (callback) => {
     if (typeof callback !== 'function') return () => {};
-    const listener = (_event, notification) => callback(notification);
+    const listener = (_event, notification) => {
+      if (
+        typeof notification?.id === 'string' &&
+        typeof notification.text === 'string' &&
+        ['codex', 'deepseek'].includes(notification.source) &&
+        typeof notification.projectName === 'string' &&
+        notification.projectName.length <= 80 &&
+        typeof notification.detail === 'string' &&
+        notification.detail.length <= 1024
+      ) callback(notification);
+    };
     ipcRenderer.on('codex:notification', listener);
     return () => ipcRenderer.removeListener('codex:notification', listener);
   },

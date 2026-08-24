@@ -89,7 +89,10 @@ test('DeepSeek 事件只映射真实用户、工具安全摘要、审批和结�
   const { createEventBridge } = await import(bundleUrl);
   const sent = [];
   const bridge = createEventBridge((message) => sent.push(message));
-  const session = { id: 'session-1' };
+  const session = {
+    id: 'session-1',
+    header: { cwd: 'C:\\Users\\ch\\Desktop\\桌宠创作' }
+  };
 
   bridge(session, sessionEvent('user/message', {
     source: { kind: 'plugin', plugin: 'fixture' },
@@ -104,7 +107,9 @@ test('DeepSeek 事件只映射真实用户、工具安全摘要、审批和结�
   bridge(session, sessionEvent('tool/call', {
     turn: 1,
     name: 'Bash',
-    arguments: JSON.stringify({ command: 'npm test -- --token sk-secret' })
+    arguments: JSON.stringify({
+      command: 'npm test -- --token sk-secret\nset API_KEY=another-secret'
+    })
   }));
   bridge(session, sessionEvent('tool/call', {
     turn: 1,
@@ -127,6 +132,8 @@ test('DeepSeek 事件只映射真实用户、工具安全摘要、审批和结�
     'UserPromptSubmit', 'PreToolUse', 'PreToolUse', 'PermissionRequest', 'Stop'
   ]);
   assert.equal(sent[1].detailText, '正在运行 npm test');
+  assert.equal(sent[1].projectName, '桌宠创作');
+  assert.equal(sent[1].commandText, 'npm test -- --token ***\nset API_KEY=***');
   assert.equal(sent[2].detailText, '正在修改 package.json');
   assert.equal(sent[3].detailText, '等待确认：运行命令');
   const serialized = JSON.stringify(sent);

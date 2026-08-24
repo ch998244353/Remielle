@@ -12,7 +12,13 @@
   </head>
   <body data-side="right">
     <div class="bubble">
-      <p id="text"></p>
+      <p id="plain-text" class="plain-text"></p>
+      <section id="project-message" class="project-message" hidden>
+        <header class="message-title">
+          <span id="source-name"></span><span aria-hidden="true"> · </span><span id="project-name" class="project-name"></span>
+        </header>
+        <pre id="message-detail" class="message-detail"></pre>
+      </section>
     </div>
     <script src="renderer.js"></script>
   </body>

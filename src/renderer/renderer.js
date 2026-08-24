@@ -97,7 +97,10 @@ globalThis.petApi.onInteractionLocked((locked) => {
 globalThis.petApi.onNotification((notification) => {
   if (
     typeof notification?.id !== 'string' ||
-    typeof notification?.text !== 'string'
+    typeof notification?.text !== 'string' ||
+    !['codex', 'deepseek'].includes(notification.source) ||
+    typeof notification.projectName !== 'string' ||
+    typeof notification.detail !== 'string'
   ) return;
   const result = machine.showMessage(notification.text);
   globalThis.petApi.reportNotification(
@@ -105,7 +108,12 @@ globalThis.petApi.onNotification((notification) => {
     result.accepted ? 'accepted' : result.reason
   );
   if (!result.accepted) return;
-  globalThis.petApi.showBubble(result.text);
+  globalThis.petApi.showBubble({
+    mode: 'project',
+    source: notification.source,
+    projectName: notification.projectName,
+    detail: notification.detail
+  });
   if (result.animate) renderState();
 });
 

@@ -14,6 +14,8 @@ const ALLOWED_FIELDS = new Set([
   'turnId',
   'event',
   'toolName',
+  'projectName',
+  'commandText',
   'detailText',
   'finalText',
   'sentAt'
@@ -44,6 +46,8 @@ function parseBridgeMessage(input) {
     value.sentAt < 0
   ) return null;
   if (value.toolName !== undefined && !validString(value.toolName, 128, true)) return null;
+  if (value.projectName !== undefined && !validString(value.projectName, 80)) return null;
+  if (value.commandText !== undefined && !validString(value.commandText, 1024)) return null;
   if (value.detailText !== undefined && !validString(value.detailText, 256, true)) return null;
   if (value.finalText !== undefined && !validString(value.finalText, 2048, true)) return null;
   if (value.event === 'Stop' && value.finalText !== undefined && typeof value.finalText !== 'string') {
@@ -56,6 +60,8 @@ function parseBridgeMessage(input) {
     turnId: value.turnId,
     event: value.event,
     ...(value.toolName !== undefined ? { toolName: value.toolName } : {}),
+    ...(value.projectName !== undefined ? { projectName: value.projectName } : {}),
+    ...(value.commandText !== undefined ? { commandText: value.commandText } : {}),
     ...(value.detailText !== undefined ? { detailText: value.detailText } : {}),
     ...(value.finalText !== undefined ? { finalText: value.finalText } : {}),
     sentAt: value.sentAt
@@ -68,36 +74,41 @@ function normalizeText(value) {
 
 function notificationFromMessage(message) {
   const label = message.source === 'deepseek' ? 'DeepSeek' : 'Codex';
+  const source = message.source === 'deepseek' ? 'deepseek' : 'codex';
+  const projectName = normalizeText(message.projectName) || '未知项目';
+  const commandText = typeof message.commandText === 'string' ? message.commandText.trim() : '';
   const detail = normalizeText(message.detailText);
+  const notification = (kind, summary) => ({
+    kind,
+    text: `${label} ${summary}`,
+    source,
+    projectName,
+    detail: commandText || summary
+  });
   if (message.event === 'UserPromptSubmit') {
-    return { kind: 'ordinary', text: detail ? `${label} ${detail}` : `${label} 开始处理任务` };
+    return notification('ordinary', detail || '开始处理任务');
   }
   if (message.event === 'PermissionRequest') {
-    return { kind: 'critical', text: detail ? `${label} ${detail}` : `${label} 正在等待你的确认` };
+    return notification('critical', detail || '正在等待你的确认');
   }
   if (message.event === 'Stop') {
     const summary = normalizeText(message.finalText);
-    return {
-      kind: 'critical',
-      text: detail || summary
-        ? `${label} ${detail || `已结束：${summary}`}`
-        : `${label} 已结束`
-    };
+    return notification('critical', detail || (summary ? `已结束：${summary}` : '已结束'));
   }
 
-  if (detail) return { kind: 'ordinary', text: `${label} ${detail}` };
+  if (detail) return notification('ordinary', detail);
 
   const toolName = message.toolName || '';
   if (/^(Bash|exec_command|write_stdin)$/iu.test(toolName)) {
-    return { kind: 'ordinary', text: `${label} 正在运行命令` };
+    return notification('ordinary', '正在运行命令');
   }
   if (/^(apply_patch|Edit|Write)$/iu.test(toolName)) {
-    return { kind: 'ordinary', text: `${label} 正在修改文件` };
+    return notification('ordinary', '正在修改文件');
   }
   if (/^(Agent|spawn_agent|send_message|followup_task)$/iu.test(toolName)) {
-    return { kind: 'ordinary', text: `${label} 正在使用子智能体` };
+    return notification('ordinary', '正在使用子智能体');
   }
-  return { kind: 'ordinary', text: `${label} 正在调用工具` };
+  return notification('ordinary', '正在调用工具');
 }
 
 function notificationBridgeRequired(...states) {
@@ -154,7 +165,14 @@ function createNotificationCoordinator({
     if (!notification) return false;
     cancelTimer();
     inFlight = notification;
-    send({ id: notification.id, text: notification.text, kind: notification.kind });
+    send({
+      id: notification.id,
+      text: notification.text,
+      kind: notification.kind,
+      source: notification.source,
+      projectName: notification.projectName,
+      detail: notification.detail
+    });
     return true;
   }
 

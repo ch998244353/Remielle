@@ -136,7 +136,7 @@ test('隐藏 PowerShell 转发器在桌宠未运行时快速无操作退出且�
   assert.doesNotMatch(result.stdout, /提示词|transcript|model/u);
 });
 
-test('真实 PowerShell 转发到 Named Pipe 时只保留白名单字段', {
+test('真实 PowerShell 转发到 Named Pipe 时只保留白名单字段和工作目录 basename', {
   skip: process.platform !== 'win32'
 }, async (t) => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'remiel-forwarder-pipe-'));
@@ -167,7 +167,7 @@ test('真实 PowerShell 转发到 Named Pipe 时只保留白名单字段', {
     last_assistant_message: '允许的最终摘要',
     prompt: '禁止发送的提示词',
     transcript_path: 'C:\\secret\\transcript.jsonl',
-    cwd: 'C:\\secret-workspace',
+    cwd: 'C:\\private-root\\桌宠创作',
     model: 'secret-model',
     tool_input: { command: 'secret command' }
   };
@@ -197,10 +197,11 @@ test('真实 PowerShell 转发到 Named Pipe 时只保留白名单字段', {
   const message = JSON.parse(rawMessage.trim());
 
   assert.deepEqual(Object.keys(message).sort(), [
-    'event', 'finalText', 'sentAt', 'sessionId', 'turnId', 'version'
+    'event', 'finalText', 'projectName', 'sentAt', 'sessionId', 'turnId', 'version'
   ]);
   assert.equal(message.finalText, '允许的最终摘要');
-  assert.doesNotMatch(JSON.stringify(message), /提示词|transcript|workspace|model|command/u);
+  assert.equal(message.projectName, '桌宠创作');
+  assert.doesNotMatch(JSON.stringify(message), /提示词|transcript|private-root|model|command/u);
 });
 
 test('真实 PowerShell 只发送任务预览、安全命令、basename 和审批摘要', {
@@ -247,6 +248,7 @@ test('真实 PowerShell 只发送任务预览、安全命令、basename 和审�
       child.stdin.end(JSON.stringify({
         session_id: 'session-detail',
         turn_id: `turn-${targetCount}`,
+        cwd: 'C:\\Users\\ch\\Desktop\\桌宠创作\\',
         ...input
       }));
     });
@@ -267,11 +269,29 @@ test('真实 PowerShell 只发送任务预览、安全命令、basename 和审�
   const command = await forward({
     hook_event_name: 'PreToolUse',
     tool_name: 'exec_command',
-    tool_input: { command: 'npm test -- --token COMMAND_SECRET C:\\secret\\work' },
+    tool_input: {
+      command: 'npm test -- --token COMMAND_SECRET --password=PASSWORD_SECRET -H "Authorization: Bearer BEARER_SECRET" C:\\secret\\work'
+    },
     tool_output: 'TOOL_OUTPUT_SECRET'
   });
   assert.equal(command.detailText, '正在运行 npm test');
-  assert.doesNotMatch(JSON.stringify(command), /COMMAND_SECRET|secret|TOOL_OUTPUT_SECRET/u);
+  assert.equal(command.projectName, '桌宠创作');
+  assert.equal(
+    command.commandText,
+    'npm test -- --token *** --password=*** -H "Authorization: Bearer ***" C:\\secret\\work'
+  );
+  assert.doesNotMatch(
+    JSON.stringify(command),
+    /COMMAND_SECRET|PASSWORD_SECRET|BEARER_SECRET|TOOL_OUTPUT_SECRET/u
+  );
+
+  const longCommand = await forward({
+    hook_event_name: 'PreToolUse',
+    tool_name: 'Bash',
+    tool_input: { command: `echo ${'x'.repeat(1100)}` }
+  });
+  assert.equal(Array.from(longCommand.commandText).length, 1024);
+  assert.match(longCommand.commandText, /命令过长，已截断$/u);
 
   const patch = await forward({
     hook_event_name: 'PreToolUse',
@@ -289,5 +309,5 @@ test('真实 PowerShell 只发送任务预览、安全命令、basename 和审�
     tool_input: { command: 'git status --porcelain APPROVAL_SECRET' }
   });
   assert.equal(approval.detailText, '等待确认：运行 git status');
-  assert.doesNotMatch(JSON.stringify(approval), /porcelain|APPROVAL_SECRET/u);
+  assert.equal(approval.commandText, 'git status --porcelain APPROVAL_SECRET');
 });

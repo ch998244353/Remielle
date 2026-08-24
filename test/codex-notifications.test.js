@@ -27,10 +27,18 @@ function bridgeMessage(overrides = {}) {
 
 test('Pipe 输入只接受白名单字段、已知事件和受限长度', () => {
   assert.deepEqual(parseBridgeMessage(JSON.stringify(bridgeMessage())), bridgeMessage());
+  const structured = bridgeMessage({
+    projectName: '桌宠创作',
+    detailText: '正在运行 npm test',
+    commandText: 'npm test -- --watch'
+  });
+  assert.deepEqual(parseBridgeMessage(JSON.stringify(structured)), structured);
   assert.equal(parseBridgeMessage('{坏 JSON'), null);
   assert.equal(parseBridgeMessage(bridgeMessage({ event: 'HostedWebSearch' })), null);
   assert.equal(parseBridgeMessage({ ...bridgeMessage(), prompt: '不允许' }), null);
   assert.equal(parseBridgeMessage(bridgeMessage({ detailText: 'x'.repeat(257) })), null);
+  assert.equal(parseBridgeMessage(bridgeMessage({ projectName: 'x'.repeat(81) })), null);
+  assert.equal(parseBridgeMessage(bridgeMessage({ commandText: 'x'.repeat(1025) })), null);
   assert.equal(parseBridgeMessage(bridgeMessage({ sessionId: 'x'.repeat(129) })), null);
   assert.equal(parseBridgeMessage(bridgeMessage({ sentAt: -1 })), null);
   assert.equal(parseBridgeMessage(bridgeMessage({ source: 'other' })), null);
@@ -95,6 +103,19 @@ test('通知优先显示安全摘要，旧 Bridge 仍回退通用文案，最终
     toolName: 'Bash',
     detailText: '正在运行 npm test'
   })).text, 'Codex 正在运行 npm test');
+  assert.deepEqual(notificationFromMessage(bridgeMessage({
+    event: 'PreToolUse',
+    toolName: 'Bash',
+    projectName: '桌宠创作',
+    detailText: '正在运行 npm test',
+    commandText: 'npm test -- --watch\nnode --test'
+  })), {
+    kind: 'ordinary',
+    text: 'Codex 正在运行 npm test',
+    source: 'codex',
+    projectName: '桌宠创作',
+    detail: 'npm test -- --watch\nnode --test'
+  });
   assert.equal(notificationFromMessage(bridgeMessage({
     event: 'PermissionRequest',
     detailText: '等待确认：修改 package.json'
@@ -235,6 +256,9 @@ test('双来源以来源加会话为调度键，最近任务接管并保留来�
   }));
 
   assert.equal(sent[1].text, 'DeepSeek 开始处理任务');
+  assert.equal(sent[1].source, 'deepseek');
+  assert.equal(sent[1].projectName, '未知项目');
+  assert.equal(sent[1].detail, '开始处理任务');
   assert.equal(coordinator.snapshot().activeSessionId, 'deepseek:same');
   coordinator.dispose();
 });

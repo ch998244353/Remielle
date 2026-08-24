@@ -11,6 +11,8 @@ export const BALANCE_PIPE_PATH = '\\\\.\\pipe\\remiel-desktop-pet-deepseek-v1';
 const MAX_NOTIFICATION_BYTES = 8192;
 const MAX_REQUEST_BYTES = 256;
 const MAX_FINAL_CHARS = 40;
+const MAX_COMMAND_CHARS = 1024;
+const COMMAND_TRUNCATION = '…命令过长，已截断';
 
 function bound(text, limit) {
   const points = Array.from(text);
@@ -44,6 +46,24 @@ function parsedArguments(raw) {
   }
 }
 
+function isShellTool(value) {
+  return /bash|pwsh|shell|command|exec/u.test(cleanText(value).toLowerCase());
+}
+
+function safeCommandText(value) {
+  if (typeof value !== 'string' || !value.trim()) return '';
+  let command = value.trim()
+    .replace(/(--?(?:api[-_]?key|token|password|passwd|secret|authorization))(=|\s+)(?:"[^"]*"|'[^']*'|[^\s]+)/giu, '$1$2***')
+    .replace(/\b([A-Z0-9_]*(?:TOKEN|API_KEY|APIKEY|PASSWORD|PASSWD|SECRET|AUTHORIZATION)[A-Z0-9_]*)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s]+)/gimu, '$1=***')
+    .replace(/(Bearer\s+)[A-Za-z0-9._~+/-]+=*/giu, '$1***')
+    .replace(/\bsk-[A-Za-z0-9_-]{6,}\b/giu, 'sk-***');
+  const points = Array.from(command);
+  if (points.length > MAX_COMMAND_CHARS) {
+    command = `${points.slice(0, MAX_COMMAND_CHARS - Array.from(COMMAND_TRUNCATION).length).join('')}${COMMAND_TRUNCATION}`;
+  }
+  return command;
+}
+
 function commandHead(command) {
   if (typeof command !== 'string') return '';
   const tokens = command.match(/"[^"]*"|'[^']*'|[^\s]+/gu)?.slice(0, 2) || [];
@@ -58,7 +78,7 @@ function commandHead(command) {
 function toolSummary(nameValue, rawArguments) {
   const toolName = cleanText(nameValue).toLowerCase();
   const args = parsedArguments(rawArguments);
-  if (/bash|pwsh|shell|command|exec/.test(toolName)) {
+  if (isShellTool(toolName)) {
     const head = commandHead(args.command ?? args.cmd);
     return head ? `正在运行 ${head}` : '正在运行命令';
   }
@@ -102,6 +122,7 @@ export function createEventBridge(send) {
       source: 'deepseek',
       sessionId,
       turnId: turnId.slice(0, 128),
+      projectName: safeBasename(session?.header?.cwd) || '未知项目',
       sentAt: Date.now()
     };
     if (event.type === 'user/message') {
@@ -111,11 +132,16 @@ export function createEventBridge(send) {
       return;
     }
     if (event.type === 'tool/call') {
+      const args = parsedArguments(event.data.arguments);
+      const commandText = isShellTool(event.data.name)
+        ? safeCommandText(args.command ?? args.cmd)
+        : '';
       send({
         ...base,
         event: 'PreToolUse',
         toolName: cleanText(event.data.name).slice(0, 128),
-        detailText: toolSummary(event.data.name, event.data.arguments)
+        detailText: toolSummary(event.data.name, event.data.arguments),
+        ...(commandText ? { commandText } : {})
       });
       return;
     }

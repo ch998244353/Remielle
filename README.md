@@ -2,18 +2,18 @@
 
 蕾米埃尔是一个 Windows x64 桌面宠物：支持待机、点击、消息和拖动动作，可显示 Codex 剩余额度或 DeepSeek API 余额，也可选接收经过安全清洗的 Codex 与 DeepSeek Harness 任务通知。
 
-> **[下载 0.4.0 Beta](https://github.com/ch998244353/Remielle/releases/tag/v0.4.0-beta.3)**
+> **[下载 0.4.0 Beta](https://github.com/ch998244353/Remielle/releases/tag/v0.4.0-beta.4)**
 >
 > 发布页同时提供一键安装器、便携版和 `SHA256SUMS.txt`。
 
-当前版本：`0.4.0-beta.3`。Codex 与 DeepSeek Harness 通知仍是 Beta；在更多真实任务完成验收前，不视为正式稳定功能。
+当前版本：`0.4.0-beta.4`。Codex 与 DeepSeek Harness 通知仍是 Beta；在更多真实任务完成验收前，不视为正式稳定功能。
 
 ## 选择下载版本
 
 | 文件 | 适合谁 | 行为 |
 | --- | --- | --- |
-| `Remielle-Setup-0.4.0-beta.3.exe`（蕾米埃尔一键安装器） | 希望一键安装的用户 | 安装到当前用户，创建桌面和开始菜单快捷方式，安装后启动，可从 Windows 设置卸载 |
-| `Remielle-Portable-0.4.0-beta.3.exe`（蕾米埃尔便携版） | 希望免安装或放在 U 盘的用户 | 单文件直接运行，不创建卸载入口 |
+| `Remielle-Setup-0.4.0-beta.4.exe`（蕾米埃尔一键安装器） | 希望一键安装的用户 | 安装到当前用户，创建桌面和开始菜单快捷方式，安装后启动，可从 Windows 设置卸载 |
+| `Remielle-Portable-0.4.0-beta.4.exe`（蕾米埃尔便携版） | 希望免安装或放在 U 盘的用户 | 单文件直接运行，不创建卸载入口 |
 | `SHA256SUMS.txt` | 所有用户 | 用于核对下载文件是否完整 |
 
 本项目暂未购买 Windows 代码签名证书。Windows SmartScreen 可能显示“未知发布者”；请只从本仓库 Release 下载，并先核对 SHA-256，不要从不明镜像运行。
@@ -69,8 +69,8 @@ Bridge v1 只允许固定事件、`codex/deepseek` 来源和白名单字段进�
 在下载目录打开 PowerShell：
 
 ```powershell
-Get-FileHash -Algorithm SHA256 -LiteralPath '.\Remielle-Setup-0.4.0-beta.3.exe'
-Get-FileHash -Algorithm SHA256 -LiteralPath '.\Remielle-Portable-0.4.0-beta.3.exe'
+Get-FileHash -Algorithm SHA256 -LiteralPath '.\Remielle-Setup-0.4.0-beta.4.exe'
+Get-FileHash -Algorithm SHA256 -LiteralPath '.\Remielle-Portable-0.4.0-beta.4.exe'
 ```
 
 结果应与同一 Release 中的 `SHA256SUMS.txt` 完全一致。
